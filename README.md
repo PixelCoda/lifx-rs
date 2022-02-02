@@ -1,4 +1,4 @@
-# LIFX-API-RS
+# lifx-rs
 
 ## Description
 
