@@ -18,10 +18,35 @@ lifx-api-rs = "0.1.0"
 
 Example:
 ```rust
-extern crate payup;
+extern crate lifx_rs;
 
 fn main() {
 
+    let key = "xxx".to_string();
+    
+    let mut off_state = lifx_rs::State::new();
+    off_state.power = Some(format!("off"));
+
+    // Turn off all lights
+    lifx_rs::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+
+
+    let all_lights = lifx_rs::Light::list_all(key.clone());
+    match all_lights {
+        Ok(lights) => {
+            println!("{:?}",lights.clone());
+
+            let mut state = lifx_rs::State::new();
+            state.power = Some(format!("on"));
+            state.brightness = Some(1.0);
+        
+            for light in lights {
+                let results = light.set_state(key.clone(), state.clone());
+                println!("{:?}",results);
+            }
+        },
+        Err(e) => println!("{}",e)
+    }
 
 }
 
