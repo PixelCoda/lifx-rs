@@ -10,6 +10,12 @@ A synchronous + asynchronous library for communicating with the LIFX-API.
 * Set States
 * State Delta
 * Toggle Power
+* Breathe Effect
+* Move Effect
+* Morph Effect
+* Flame Effect
+* Pulse Effect
+* Effects Off
 * Clean (HEV)
 * List Scenes
 * Validate Color
@@ -18,7 +24,7 @@ A synchronous + asynchronous library for communicating with the LIFX-API.
 
 Add the following line to your cargo.toml:
 ```
-lifx-rs = "0.1.1"
+lifx-rs = "0.1.2"
 ```
 
 Example:
@@ -55,6 +61,28 @@ fn main() {
 
 }
 ```
+
+
+Async Example:
+```rust
+extern crate lifx_rs as lifx;
+
+#[tokio::main]
+async fn main() {
+
+    let key = "xxx".to_string();
+
+    let mut off_state = lifx::State::new();
+    off_state.power = Some(format!("off"));
+    
+    // Turn off all lights
+    lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+}
+```
+
+
+
+
 ## License
 
 Released under Apache 2.0.

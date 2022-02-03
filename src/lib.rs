@@ -123,6 +123,91 @@ pub struct Light {
 }
 impl Light {
 
+    /// Asynchronously set the breathe animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `breathe` - A BreatheEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut breathe = lifx::BreatheEffect::new();
+    ///             breathe.color = Some(format!("red"));
+    ///             breathe.from_color = Some(format!("green"));
+    ///             breathe.period = Some(10);
+    ///             breathe.persist = Some(true);
+    ///             breathe.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.async_breathe_effect(key.clone(), breathe.clone()).await;
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_breathe_effect(&self, access_token: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_breathe_effect_by_selector(access_token, format!("id:{}", self.id), breathe).await;
+    }
+
+    /// Asynchronously activate the breathe animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `breathe` - A BreatheEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut breathe = lifx::BreatheEffect::new();
+    ///     breathe.color = Some(format!("red"));
+    ///     breathe.from_color = Some(format!("green"));
+    ///     breathe.period = Some(10);
+    ///     breathe.persist = Some(true);
+    ///     breathe.power_on = Some(true);
+    ///     
+    ///     // Apply breathe effect to all light(s)
+    ///     lifx::Light::async_breathe_effect_by_selector(key.clone(), format!("all"), breathe).await;
+    /// }
+    ///  ```
+    pub async fn async_breathe_effect_by_selector(access_token: String, selector: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/breathe", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&breathe.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
+
     /// Asynchronously switch a light to clean mode, with a set duration. 
     /// 
     /// # Arguments
@@ -134,23 +219,24 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(key.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut clean = lifx_rs::Clean::new();
+    ///             let mut clean = lifx::Clean::new();
     ///             clean.duration = Some(0);
     ///             clean.stop = Some(false);
     ///         
     ///             for light in lights {
-    ///                 let results = light.clean(key.clone(), clean.clone());
+    ///                 let results = light.async_clean(key.clone(), clean.clone()).await;
     ///                 println!("{:?}",results);
     ///             }
     ///         },
@@ -173,18 +259,19 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut clean = lifx_rs::Clean::new();
+    ///     let mut clean = lifx::Clean::new();
     ///     clean.duration = Some(0);
     ///     clean.stop = Some(false);
     ///     
     ///     // Set all light to clean mode
-    ///     lifx_rs::Light::clean_by_selector(key.clone(), format!("all"), clean);
+    ///     lifx::Light::async_clean_by_selector(key.clone(), format!("all"), clean).await;
     /// }
     ///  ```
     pub async fn async_clean_by_selector(access_token: String, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
@@ -193,6 +280,165 @@ impl Light {
         let request = reqwest::Client::new().post(url)
             .header("Authorization", format!("Bearer {}", access_token))
             .form(&clean.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
+
+    /// Stops animation(s) for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `flame_effect` - A FlameEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut effects_off = lifx::FlameEffect::new();
+    ///             effects_off.power_off = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.async_effects_off(key.clone(), effects_off.clone()).await;
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_effects_off(&self, access_token: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_effects_off_by_selector(access_token, format!("id:{}", self.id), effects_off).await;
+    }
+
+    /// Stops animation(s) for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `effects_off` - A EffectsOff object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut effects_off = lifx::FlameEffect::new();
+    ///     effects_off.power_off = Some(true);
+    ///     
+    ///     // Send morph effect to all lights
+    ///     lifx::Light::async_effects_off_by_selector(key.clone(), format!("all"), effects_off).await;
+    /// }
+    ///  ```
+    pub async fn async_effects_off_by_selector(access_token: String, selector: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/off", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&effects_off.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
+
+
+    /// Activate the flame animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `flame_effect` - A FlameEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut flame_effect = lifx::FlameEffect::new();
+    ///             flame_effect.period = Some(10);
+    ///             flame_effect.duration = Some(0);
+    ///             flame_effect.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.async_flame_effect(key.clone(), flame_effect.clone()).await;
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_flame_effect(&self, access_token: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_flame_effect_by_selector(access_token, format!("id:{}", self.id), flame_effect).await;
+    }
+
+    /// Activate the flame animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `flame_effect` - A FlameEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut flame_effect = lifx::FlameEffect::new();
+    ///     flame_effect.period = Some(10);
+    ///     flame_effect.duration = Some(0);
+    ///     flame_effect.power_on = Some(true);
+    ///     
+    ///     // Send morph effect to all lights
+    ///     lifx::Light::async_flame_effect_by_selector(key.clone(), format!("all"), flame_effect).await;
+    /// }
+    ///  ```
+    pub async fn async_flame_effect_by_selector(access_token: String, selector: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/flame", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&flame_effect.to_params())
             .send().await?;
     
         let json = request.json::<LiFxResults>().await?;
@@ -210,13 +456,14 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::async_list_all(key).await?;
+    ///     let all_lights = lifx::Light::async_list_all(key).await?;
     /// }
     ///  ```
     pub async fn async_list_all(access_token: String) -> Result<Lights, reqwest::Error> {
@@ -233,13 +480,14 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::async_list_by_selector(key, format!("all")).await?;
+    ///     let all_lights = lifx::Light::async_list_by_selector(key, format!("all")).await?;
     /// }
     ///  ```
     pub async fn async_list_by_selector(access_token: String, selector: String) -> Result<Lights, reqwest::Error> {
@@ -248,6 +496,261 @@ impl Light {
         let json = request.json::<Lights>().await?;
         return Ok(json);
     }
+
+    /// Asynchronously activate the morph animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `morph_effect` - A MorphEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut morph_effect = lifx::MorphEffect::new();
+    ///             morph_effect.period = Some(10);
+    ///             morph_effect.duration = Some(0);
+    /// 
+    ///             let mut palette: Vec<String> = Vec::new();
+    ///             palette.push(format!("red"));
+    ///             palette.push(format!("green"));
+    /// 
+    ///             morph_effect.palette = Some(palette);
+    ///             morph_effect.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.morph_effect(key.clone(), morph_effect.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_morph_effect(&self, access_token: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_morph_effect_by_selector(access_token, format!("id:{}", self.id), morph_effect).await;
+    }
+
+    /// Asynchronously activate the morph animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut morph_effect = lifx::MorphEffect::new();
+    ///     morph_effect.period = Some(10);
+    ///     morph_effect.duration = Some(0);
+    /// 
+    ///     let mut palette: Vec<String> = Vec::new();
+    ///     palette.push(format!("red"));
+    ///     palette.push(format!("green"));
+    /// 
+    ///     morph_effect.palette = Some(palette);
+    ///     morph_effect.power_on = Some(true);
+    ///     
+    ///     // Send morph effect to all lights
+    ///     lifx::Light::morph_effect_by_selector(key.clone(), format!("all"), morph_effect);
+    /// }
+    ///  ```
+    pub async fn async_morph_effect_by_selector(access_token: String, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/morph", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&morph_effect.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously activate the move animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `move_effect` - A MoveEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut move_effect = lifx::MoveEffect::new();
+    ///             move_effect.direction = Some(format!("forward")); // or backward
+    ///             move_effect.period = Some(10);
+    ///             move_effect.cycles = Some(0.9);
+    ///             move_effect.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.move_effect(key.clone(), move_effect.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_move_effect(&self, access_token: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_move_effect_by_selector(access_token, format!("id:{}", self.id), move_effect).await;
+    }
+
+    /// Asynchronously activate the move animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `move_effect` - A MoveEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut move_effect = lifx::MoveEffect::new();
+    ///     move_effect.direction = Some(format!("forward")); // or backward
+    ///     move_effect.period = Some(10);
+    ///     move_effect.cycles = Some(0.9);
+    ///     move_effect.power_on = Some(true);
+    ///     
+    ///     // Toggle all lights
+    ///     lifx::Light::move_effect_by_selector(key.clone(), format!("all"), move_effect);
+    /// }
+    ///  ```
+    pub async fn async_move_effect_by_selector(access_token: String, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/move", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&move_effect.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously activate the pulse animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `pulse_effect` - A PulseEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut pulse = lifx::PulseEffect::new();
+    ///             pulse.color = Some(format!("red"));
+    ///             pulse.from_color = Some(format!("green"));
+    ///             pulse.period = Some(10);
+    ///             pulse.persist = Some(true);
+    ///             pulse.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.async_pulse_effect(key.clone(), pulse.clone()).await;
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_pulse_effect(&self, access_token: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_pulse_effect_by_selector(access_token, format!("id:{}", self.id), pulse_effect).await;
+    }
+
+    /// Asynchronously activate the pulse animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `pulse_effect` - A PulseEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut pulse = lifx::PulseEffect::new();
+    ///     pulse.color = Some(format!("red"));
+    ///     pulse.from_color = Some(format!("green"));
+    ///     pulse.period = Some(10);
+    ///     pulse.persist = Some(true);
+    ///     pulse.power_on = Some(true);
+    ///     
+    ///     // Toggle all lights
+    ///     lifx::Light::async_pulse_effect_by_selector(key.clone(), format!("all"), pulse).await;
+    /// }
+    ///  ```
+    pub async fn async_pulse_effect_by_selector(access_token: String, selector: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/pulse", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&pulse_effect.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
 
 
     /// Asynchronously sets the state for the current light
@@ -261,18 +764,19 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(key.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut state = lifx_rs::State::new();
+    ///             let mut state = lifx::State::new();
     ///             state.power = Some(format!("on"));
     ///             state.brightness = Some(1.0);
     ///         
@@ -300,17 +804,18 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut off_state = lifx_rs::State::new();
+    ///     let mut off_state = lifx::State::new();
     ///     off_state.power = Some(format!("off"));
     ///     
     ///     // Turn off all lights
-    ///     lifx_rs::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+    ///     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
     /// }
     ///  ```
     pub async fn async_set_state_by_selector(access_token: String, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
@@ -335,30 +840,31 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut set_states = lifx_rs::States::new();
-    ///     let mut states: Vec<lifx_rs::State> = Vec::new();
-    ///     let mut defaults = lifx_rs::State::new();
+    ///     let mut set_states = lifx::States::new();
+    ///     let mut states: Vec<lifx::State> = Vec::new();
+    ///     let mut defaults = lifx::State::new();
     ///     
     ///     defaults.brightness = Some(1.0);
     ///     
-    ///     let mut state_1 = lifx_rs::State::new();
+    ///     let mut state_1 = lifx::State::new();
     ///     state_1.selector = Some(format!("id:xxx"));
     ///     state_1.power = Some(format!("on"));
     ///     
-    ///     let mut state_2 = lifx_rs::State::new();
+    ///     let mut state_2 = lifx::State::new();
     ///     state_2.selector = Some(format!("id:xyz"));
     ///     state_2.power = Some(format!("on"));
     ///     
     ///     set_states.states = Some(states);
     ///     set_states.defaults = Some(defaults);
     ///     
-    ///     lifx_rs::Light::async_set_states(key.clone(), set_states).await;
+    ///     lifx::Light::async_set_states(key.clone(), set_states).await;
     /// }
     ///  ```
     pub async fn async_set_states(access_token: String, states: States) ->  Result<LiFxResults, reqwest::Error>{
@@ -384,18 +890,19 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut delta = lifx_rs::StateDelta::new();
+    ///     let mut delta = lifx::StateDelta::new();
     ///     delta.duration = Some(0);
     ///     delta.power = Some(format!("on"));
     ///     
     ///     // Send StateDelta
-    ///     lifx_rs::Light::async_state_delta_by_selector(key.clone(), format!("all"), toggle).await;
+    ///     lifx::Light::async_state_delta_by_selector(key.clone(), format!("all"), toggle).await;
     /// }
     ///  ```
     pub async fn async_state_delta_by_selector(access_token: String, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
@@ -423,22 +930,23 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(key.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut toggle = lifx_rs::Toggle::new();
+    ///             let mut toggle = lifx::Toggle::new();
     ///             toggle.duration = Some(0);
     ///         
     ///             for light in lights {
-    ///                 let results = light.toggle(key.clone(), clean.clone());
+    ///                 let results = light.async_toggle(key.clone(), clean.clone()).await;
     ///                 println!("{:?}",results);
     ///             }
     ///         },
@@ -463,7 +971,8 @@ impl Light {
     /// ```
     /// extern crate lifx_rs;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
@@ -471,7 +980,7 @@ impl Light {
     ///     toggle.duration = Some(0);
     ///     
     ///     // Toggle all lights
-    ///     lifx_rs::Light::toggle_by_selector(key.clone(), format!("all"), toggle);
+    ///     lifx_rs::Light::async_toggle_by_selector(key.clone(), format!("all"), toggle).await?;
     /// }
     ///  ```
     pub async fn async_toggle_by_selector(access_token: String, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
@@ -494,6 +1003,88 @@ impl Light {
     // BEGINING OF SYNC FUNCTIONS
     // =======================================
 
+    /// Set the breathe animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `breathe` - A BreatheEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut breathe = lifx::BreatheEffect::new();
+    ///             breathe.color = Some(format!("red"));
+    ///             breathe.from_color = Some(format!("green"));
+    ///             breathe.period = Some(10);
+    ///             breathe.persist = Some(true);
+    ///             breathe.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.breathe_effect(key.clone(), breathe.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn breathe_effect(&self, access_token: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::breathe_by_selector_effect(access_token, format!("id:{}", self.id), breathe);
+    }
+
+    /// Activate the breathe animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `breathe` - A BreatheEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut breathe = lifx::BreatheEffect::new();
+    ///     breathe.color = Some(format!("red"));
+    ///     breathe.from_color = Some(format!("green"));
+    ///     breathe.period = Some(10);
+    ///     breathe.persist = Some(true);
+    ///     breathe.power_on = Some(true);
+    ///     
+    ///     // Apply breathe effect to all light(s)
+    ///     lifx::Light::breathe_by_selector_effect(key.clone(), format!("all"), breathe);
+    /// }
+    ///  ```
+    pub fn breathe_by_selector_effect(access_token: String, selector: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/breathe", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&breathe.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
     /// This endpoint lets you switch a light to clean mode, with a set duration. 
     /// 
     /// # Arguments
@@ -505,18 +1096,18 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(key.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut clean = lifx_rs::Clean::new();
+    ///             let mut clean = lifx::Clean::new();
     ///             clean.duration = Some(0);
     ///             clean.stop = Some(false);
     ///         
@@ -544,18 +1135,18 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut clean = lifx_rs::Clean::new();
+    ///     let mut clean = lifx::Clean::new();
     ///     clean.duration = Some(0);
     ///     clean.stop = Some(false);
     ///     
     ///     // Set all light to clean mode
-    ///     lifx_rs::Light::clean_by_selector(key.clone(), format!("all"), clean);
+    ///     lifx::Light::clean_by_selector(key.clone(), format!("all"), clean);
     /// }
     ///  ```
     pub fn clean_by_selector(access_token: String, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
@@ -570,6 +1161,209 @@ impl Light {
         return Ok(json);
     }
 
+
+    
+
+
+    /// Stops animation(s) for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `flame_effect` - A FlameEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut effects_off = lifx::FlameEffect::new();
+    ///             effects_off.power_off = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.effects_off(key.clone(), effects_off.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn effects_off(&self, access_token: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::effects_off_by_selector(access_token, format!("id:{}", self.id), effects_off);
+    }
+
+    /// Stops animation(s) for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `effects_off` - A EffectsOff object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut effects_off = lifx::FlameEffect::new();
+    ///     effects_off.power_off = Some(true);
+    ///     
+    ///     // Send morph effect to all lights
+    ///     lifx::Light::effects_off_by_selector(key.clone(), format!("all"), effects_off);
+    /// }
+    ///  ```
+    pub fn effects_off_by_selector(access_token: String, selector: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/off", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&effects_off.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+
+
+
+
+
+    /// Activate the flame animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `flame_effect` - A FlameEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut flame_effect = lifx::FlameEffect::new();
+    ///             flame_effect.period = Some(10);
+    ///             flame_effect.duration = Some(0);
+    ///             flame_effect.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.flame_effect(key.clone(), flame_effect.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn flame_effect(&self, access_token: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::flame_effect_by_selector(access_token, format!("id:{}", self.id), flame_effect);
+    }
+
+    /// Activate the flame animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `flame_effect` - A FlameEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut flame_effect = lifx::FlameEffect::new();
+    ///     flame_effect.period = Some(10);
+    ///     flame_effect.duration = Some(0);
+    ///     flame_effect.power_on = Some(true);
+    ///     
+    ///     // Send morph effect to all lights
+    ///     lifx::Light::flame_effect_by_selector(key.clone(), format!("all"), flame_effect);
+    /// }
+    ///  ```
+    pub fn flame_effect_by_selector(access_token: String, selector: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/flame", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&flame_effect.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /// Gets ALL lights belonging to the authenticated account
     /// 
     /// # Arguments
@@ -579,13 +1373,13 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key)?;
+    ///     let all_lights = lifx::Light::list_all(key)?;
     /// }
     ///  ```
     pub fn list_all(access_token: String) -> Result<Lights, reqwest::Error> {
@@ -602,13 +1396,13 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_by_selector(key, format!("all"))?;
+    ///     let all_lights = lifx::Light::list_by_selector(key, format!("all"))?;
     /// }
     ///  ```
     pub fn list_by_selector(access_token: String, selector: String) -> Result<Lights, reqwest::Error> {
@@ -617,6 +1411,269 @@ impl Light {
         let json = request.json::<Lights>()?;
         return Ok(json);
     }
+
+    /// Activate the morph animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `morph_effect` - A MorphEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut morph_effect = lifx::MorphEffect::new();
+    ///             morph_effect.period = Some(10);
+    ///             morph_effect.duration = Some(0);
+    /// 
+    ///             let mut palette: Vec<String> = Vec::new();
+    ///             palette.push(format!("red"));
+    ///             palette.push(format!("green"));
+    /// 
+    ///             morph_effect.palette = Some(palette);
+    ///             morph_effect.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.morph_effect(key.clone(), morph_effect.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn morph_effect(&self, access_token: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::morph_effect_by_selector(access_token, format!("id:{}", self.id), morph_effect);
+    }
+
+    /// Activate the morph animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut morph_effect = lifx::MorphEffect::new();
+    ///     morph_effect.period = Some(10);
+    ///     morph_effect.duration = Some(0);
+    /// 
+    ///     let mut palette: Vec<String> = Vec::new();
+    ///     palette.push(format!("red"));
+    ///     palette.push(format!("green"));
+    /// 
+    ///     morph_effect.palette = Some(palette);
+    ///     morph_effect.power_on = Some(true);
+    ///     
+    ///     // Send morph effect to all lights
+    ///     lifx::Light::morph_effect_by_selector(key.clone(), format!("all"), morph_effect);
+    /// }
+    ///  ```
+    pub fn morph_effect_by_selector(access_token: String, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/morph", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&morph_effect.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+    /// Activate the move animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `move_effect` - A MoveEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut move_effect = lifx::MoveEffect::new();
+    ///             move_effect.direction = Some(format!("forward")); // or backward
+    ///             move_effect.period = Some(10);
+    ///             move_effect.cycles = Some(0.9);
+    ///             move_effect.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.move_effect(key.clone(), move_effect.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn move_effect(&self, access_token: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::move_effect_by_selector(access_token, format!("id:{}", self.id), move_effect);
+    }
+
+    /// Activate the move animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut move_effect = lifx::MoveEffect::new();
+    ///     move_effect.direction = Some(format!("forward")); // or backward
+    ///     move_effect.period = Some(10);
+    ///     move_effect.cycles = Some(0.9);
+    ///     move_effect.power_on = Some(true);
+    ///     
+    ///     // Toggle all lights
+    ///     lifx::Light::move_effect_by_selector(key.clone(), format!("all"), move_effect);
+    /// }
+    ///  ```
+    pub fn move_effect_by_selector(access_token: String, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/move", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&move_effect.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+
+
+
+
+    /// Activate the pulse animation for the current light
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `pulse_effect` - A PulseEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut pulse = lifx::PulseEffect::new();
+    ///             pulse.color = Some(format!("red"));
+    ///             pulse.from_color = Some(format!("green"));
+    ///             pulse.period = Some(10);
+    ///             pulse.persist = Some(true);
+    ///             pulse.power_on = Some(true);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.pulse_effect(key.clone(), pulse.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn pulse_effect(&self, access_token: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::pulse_effect_by_selector(access_token, format!("id:{}", self.id), pulse_effect);
+    }
+
+    /// Activate the pulse animation for the selected light(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `pulse_effect` - A PulseEffect object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut pulse = lifx::PulseEffect::new();
+    ///     pulse.color = Some(format!("red"));
+    ///     pulse.from_color = Some(format!("green"));
+    ///     pulse.period = Some(10);
+    ///     pulse.persist = Some(true);
+    ///     pulse.power_on = Some(true);
+    ///     
+    ///     // Toggle all lights
+    ///     lifx::Light::pulse_effect_by_selector(key.clone(), format!("all"), pulse);
+    /// }
+    ///  ```
+    pub fn pulse_effect_by_selector(access_token: String, selector: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/effects/pulse", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&pulse_effect.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+
+
+
+
+
+
 
 
 
@@ -631,18 +1688,18 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(key.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut state = lifx_rs::State::new();
+    ///             let mut state = lifx::State::new();
     ///             state.power = Some(format!("on"));
     ///             state.brightness = Some(1.0);
     ///         
@@ -670,17 +1727,17 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut off_state = lifx_rs::State::new();
+    ///     let mut off_state = lifx::State::new();
     ///     off_state.power = Some(format!("off"));
     ///     
     ///     // Turn off all lights
-    ///     lifx_rs::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+    ///     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
     /// }
     ///  ```
     pub fn set_state_by_selector(access_token: String, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
@@ -705,30 +1762,30 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut set_states = lifx_rs::States::new();
-    ///     let mut states: Vec<lifx_rs::State> = Vec::new();
-    ///     let mut defaults = lifx_rs::State::new();
+    ///     let mut set_states = lifx::States::new();
+    ///     let mut states: Vec<lifx::State> = Vec::new();
+    ///     let mut defaults = lifx::State::new();
     ///     
     ///     defaults.brightness = Some(1.0);
     ///     
-    ///     let mut state_1 = lifx_rs::State::new();
+    ///     let mut state_1 = lifx::State::new();
     ///     state_1.selector = Some(format!("id:xxx"));
     ///     state_1.power = Some(format!("on"));
     ///     
-    ///     let mut state_2 = lifx_rs::State::new();
+    ///     let mut state_2 = lifx::State::new();
     ///     state_2.selector = Some(format!("id:xyz"));
     ///     state_2.power = Some(format!("on"));
     ///     
     ///     set_states.states = Some(states);
     ///     set_states.defaults = Some(defaults);
     ///     
-    ///     lifx_rs::Light::set_states(key.clone(), set_states);
+    ///     lifx::Light::set_states(key.clone(), set_states);
     /// }
     ///  ```
     pub fn set_states(access_token: String, states: States) ->  Result<LiFxResults, reqwest::Error>{
@@ -754,18 +1811,18 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut delta = lifx_rs::StateDelta::new();
+    ///     let mut delta = lifx::StateDelta::new();
     ///     delta.duration = Some(0);
     ///     delta.power = Some(format!("on"));
     ///     
     ///     // Send StateDelta
-    ///     lifx_rs::Light::state_delta_by_selector(key.clone(), format!("all"), toggle);
+    ///     lifx::Light::state_delta_by_selector(key.clone(), format!("all"), toggle);
     /// }
     ///  ```
     pub fn state_delta_by_selector(access_token: String, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
@@ -792,18 +1849,18 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(key.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut toggle = lifx_rs::Toggle::new();
+    ///             let mut toggle = lifx::Toggle::new();
     ///             toggle.duration = Some(0);
     ///         
     ///             for light in lights {
@@ -830,17 +1887,17 @@ impl Light {
     /// # Examples
     ///
     /// ```
-    /// extern crate lifx_rs;
+    /// extern crate lifx_rs as lifx;
     /// 
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut toggle = lifx_rs::Toggle::new();
+    ///     let mut toggle = lifx::Toggle::new();
     ///     toggle.duration = Some(0);
     ///     
     ///     // Toggle all lights
-    ///     lifx_rs::Light::toggle_by_selector(key.clone(), format!("all"), toggle);
+    ///     lifx::Light::toggle_by_selector(key.clone(), format!("all"), toggle);
     /// }
     ///  ```
     pub fn toggle_by_selector(access_token: String, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
@@ -874,6 +1931,25 @@ pub struct Scene {
     pub errors: Option<Vec<Error>>,
 }
 impl Scene {
+    /// Asynchronously gets ALL scenes belonging to the authenticated account
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let scenes = lifx::Scene::async_list(key).await?;
+    /// }
+    ///  ```
     pub async fn async_list(access_token: String) -> Result<Scenes, reqwest::Error> {
         let mut url = format!("https://api.lifx.com/v1/scenes");
         let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send().await?;
@@ -881,6 +1957,24 @@ impl Scene {
         return Ok(json);
     }
 
+    /// Gets ALL scenes belonging to the authenticated account
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let scenes = lifx::Scene::list_all(key)?;
+    /// }
+    ///  ```
     pub fn list(access_token: String) -> Result<Scenes, reqwest::Error> {
         let mut url = format!("https://api.lifx.com/v1/scenes");
         let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send()?;
@@ -901,6 +1995,25 @@ pub struct Color {
     pub errors: Option<Vec<Error>>,
 }
 impl Color {
+    /// Asynchronously validates a color
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let scenes = lifx::Color::async_validate(key, format!("red")).await?;
+    /// }
+    ///  ```
     pub async fn async_validate(access_token: String, color: String) -> Result<Color, reqwest::Error> {
         let mut url = format!("https://api.lifx.com/v1/color?string={}", color);
         let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send().await?;
@@ -908,6 +2021,24 @@ impl Color {
         return Ok(json);
     }
 
+    /// Validates a color
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let scenes = lifx::Color::validate(key)?;
+    /// }
+    ///  ```
     pub fn validate(access_token: String, color: String) -> Result<Color, reqwest::Error> {
         let mut url = format!("https://api.lifx.com/v1/color?string={}", color);
         let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send()?;
@@ -920,7 +2051,9 @@ impl Color {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Clean {
+    /// Turn the device on / off
     pub stop: Option<bool>,
+    /// Duration in seconds (leaving blank or 0 sets the default duration for the device)
     pub duration: Option<i64>
 }
 impl Clean {
@@ -952,15 +2085,38 @@ impl Clean {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct State {
+    /// The power state you want to set on the selector. on or off
     pub power: Option<String>,
+    /// The color to set the light to.
     pub color: Option<String>,
+    /// The brightness level from 0.0 to 1.0. Overrides any brightness set in color (if any).
     pub brightness: Option<f64>,
+    /// How long in seconds you want the power action to take. Range: 0.0 – 3155760000.0 (100 years)
     pub duration: Option<f64>,
+    /// The maximum brightness of the infrared channel from 0.0 to 1.0.
     pub infrared: Option<f64>,
+    /// The selector to limit which light to use for set_states()
     pub selector:  Option<String>,
+    /// Execute the query fast, without initial state checks and wait for no results.
     pub fast: Option<bool>
 }
 impl State {
+
+    /// Returns a new State object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut state = lifx::State::new();
+    ///     state.power = Some(format!("off"));
+    /// }
+    ///  ```
     pub fn new() -> Self {
         return State{
             power: None,
@@ -1009,13 +2165,28 @@ impl State {
 
 }
 
-/// Used to set the duration of a Toggle event
+/// Used to set the params when posting a Toggle event
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Toggle {
     pub duration: Option<i64>
 }
 impl Toggle {
+    /// Returns a new Toggle object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut toggle = lifx::Toggle::new();
+    ///     toggle.duration = Some(0);
+    /// }
+    ///  ```
     pub fn new() -> Self {
         return Toggle{
             duration: None
@@ -1043,26 +2214,29 @@ pub struct States {
     pub defaults: Option<State>,
 }
 impl States {
+    /// Returns a new States object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut states = lifx::States::new();
+    /// }
+    ///  ```
     pub fn new() -> Self {
         return States{
             states: None,
             defaults: None
         };
     }
-
-    // fn to_params(&self) -> Vec<(String, String)> {
-    //     let mut params: Vec<(String, String)> = vec![];
-    //     match &self.duration{
-    //         Some(duration) => params.push(("duration".to_string(), duration.to_string())),
-    //         None => {}
-    //     }
-    //     return params;
-    // }
-
-
 }
 
-/// Defines parameters for StateDelta
+/// Used to set the params when posting a StateDelta event
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StateDelta {
@@ -1084,6 +2258,21 @@ pub struct StateDelta {
     pub fast: Option<bool>,
 }
 impl StateDelta {
+    /// Returns a new StateDelta object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut delta = lifx::StateDelta::new();
+    ///     delta.duration = Some(0);
+    /// }
+    ///  ```
     pub fn new() -> Self {
         return StateDelta{
             power: None,
@@ -1144,7 +2333,7 @@ impl StateDelta {
 
 }
 
-/// Defines parameters for the BreatheEffect
+/// Used to set the params when posting a BreatheEffect event
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BreatheEffect {
@@ -1164,6 +2353,25 @@ pub struct BreatheEffect {
     pub peak: Option<f64>,
 }
 impl BreatheEffect {
+    /// Returns a new BreatheEffect object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut breathe = lifx::BreatheEffect::new();
+    ///     breathe.color = Some(format!("red"));
+    ///     breathe.from_color = Some(format!("green"));
+    ///     breathe.period = Some(10);
+    ///     breathe.persist = Some(true);
+    ///     breathe.power_on = Some(true);
+    /// }
+    ///  ```
     pub fn new() -> Self {
         return BreatheEffect{
             color: None,
@@ -1216,6 +2424,379 @@ impl BreatheEffect {
         return params;
     }
 
+}
+
+/// Used to set the params when posting a MoveEffect event
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoveEffect {
+    /// The color to use for the breathe effect.
+    pub direction: Option<String>,
+    /// The time in seconds for one cycle of the effect.
+    pub period: Option<i64>,
+    /// The number of times to repeat the effect.
+    pub cycles: Option<f64>,
+    /// If true, turn the bulb on if it is not already on.
+    pub power_on: Option<bool>,
+    /// Execute the query fast, without initial state checks and wait for no results.
+    pub fast: Option<bool>,
+}
+impl MoveEffect {
+    /// Returns a new MoveEffect object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut move_effect = lifx::MoveEffect::new();
+    ///     move_effect.direction = Some(format!("forward")); // or backward
+    ///     move_effect.period = Some(10);
+    ///     move_effect.cycles = Some(0.9);
+    ///     move_effect.power_on = Some(true);
+    /// }
+    ///  ```
+    pub fn new() -> Self {
+        return MoveEffect{
+            direction: None,
+            period: None,
+            cycles: None,
+            power_on: None,
+            fast: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.direction{
+            Some(direction) => params.push(("direction".to_string(), direction.to_string())),
+            None => {}
+        }
+
+        match &self.period{
+            Some(period) => params.push(("period".to_string(), period.to_string())),
+            None => {}
+        }
+
+        match &self.cycles{
+            Some(cycles) => params.push(("cycles".to_string(), cycles.to_string())),
+            None => {}
+        }
+
+        match &self.power_on{
+            Some(power_on) => params.push(("power_on".to_string(), power_on.to_string())),
+            None => {}
+        }
+
+        match &self.fast{
+            Some(fast) => params.push(("fast".to_string(), fast.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+/// Used to set the params when posting a MorphEffect event
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MorphEffect {
+    /// The time in seconds for one cycle of the effect.
+    pub period: Option<i64>,
+    /// How long the animation lasts for in seconds. Not specifying a duration makes the animation never stop. Specifying 0 makes the animation stop. Note that there is a known bug where the tile remains in the animation once it has completed if duration is nonzero.
+    pub duration: Option<f64>,
+    /// You can control the colors in the animation by specifying a list of color specifiers. For example ["red", "hue:100 saturation:1"]. See https://api.developer.lifx.com/docs/colors
+    pub palette: Option<Vec<String>>,
+    /// If true, turn the bulb on if it is not already on.
+    pub power_on: Option<bool>,
+    /// Execute the query fast, without initial state checks and wait for no results.
+    pub fast: Option<bool>,
+}
+impl MorphEffect {
+    /// Returns a new MorphEffect object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut morph_effect = lifx::MorphEffect::new();
+    ///     morph_effect.period = Some(10);
+    ///     morph_effect.duration = Some(0);
+    /// 
+    ///     let mut palette: Vec<String> = Vec::new();
+    ///     palette.push("red");
+    ///     palette.push("green");
+    /// 
+    ///     morph_effect.palette = Some(palette);
+    ///     morph_effect.power_on = Some(true);
+    /// 
+    /// }
+    ///  ```
+    pub fn new() -> Self {
+        return MorphEffect{
+            period: None,
+            duration: None,
+            palette: None,
+            power_on: None,
+            fast: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.period{
+            Some(period) => params.push(("period".to_string(), period.to_string())),
+            None => {}
+        }
+
+        match &self.duration{
+            Some(duration) => params.push(("duration".to_string(), duration.to_string())),
+            None => {}
+        }
+
+        match &self.palette{
+            Some(palette) => params.push(("palette".to_string(), string_vec_to_params(palette.to_vec()))),
+            None => {}
+        }
+
+        match &self.power_on{
+            Some(power_on) => params.push(("power_on".to_string(), power_on.to_string())),
+            None => {}
+        }
+
+        match &self.fast{
+            Some(fast) => params.push(("fast".to_string(), fast.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+
+
+/// Used to set the params when posting a PulseEffect event
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PulseEffect {
+    /// The color to use for the breathe effect.
+    pub color: Option<String>,
+    /// The color to start the effect from. If this parameter is omitted then the color the bulb is currently set to is used instead.
+    pub from_color: Option<String>,
+    /// The time in seconds for one cycle of the effect.
+    pub period: Option<f64>,
+    /// The number of times to repeat the effect.
+    pub cycles: Option<f64>,
+    /// If false set the light back to its previous value when effect ends, if true leave the last effect color.
+    pub persist: Option<bool>,
+    /// If true, turn the bulb on if it is not already on.
+    pub power_on: Option<bool>,
+}
+impl PulseEffect {
+    /// Returns a new PulseEffect object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut pulse = lifx::PulseEffect::new();
+    ///     pulse.color = Some(format!("red"));
+    ///     pulse.from_color = Some(format!("green"));
+    ///     pulse.period = Some(10);
+    ///     pulse.persist = Some(true);
+    ///     pulse.power_on = Some(true);
+    /// }
+    ///  ```
+    pub fn new() -> Self {
+        return PulseEffect{
+            color: None,
+            from_color: None,
+            period: None,
+            cycles: None,
+            persist: None,
+            power_on: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.color{
+            Some(color) => params.push(("color".to_string(), color.to_string())),
+            None => {}
+        }
+
+        match &self.from_color{
+            Some(from_color) => params.push(("from_color".to_string(), from_color.to_string())),
+            None => {}
+        }
+
+        match &self.period{
+            Some(period) => params.push(("period".to_string(), period.to_string())),
+            None => {}
+        }
+
+        match &self.cycles{
+            Some(cycles) => params.push(("cycles".to_string(), cycles.to_string())),
+            None => {}
+        }
+
+        match &self.persist{
+            Some(persist) => params.push(("persist".to_string(), persist.to_string())),
+            None => {}
+        }
+
+        match &self.power_on{
+            Some(power_on) => params.push(("power_on".to_string(), power_on.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+/// Used to set the params when posting a EffectsOff event
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EffectsOff {
+    /// If true, the devices will also be turned off
+    pub power_off: Option<bool>,
+}
+impl EffectsOff {
+    /// Returns a new EffectsOff object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut ef = lifx::EffectsOff::new();
+    ///     ef.power_off = Some(true);
+    /// }
+    ///  ```
+    pub fn new() -> Self {
+        return EffectsOff{
+            power_off: None,
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.power_off{
+            Some(power_off) => params.push(("power_off".to_string(), power_off.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+
+
+/// Used to set the params when posting a FlameEffect event
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlameEffect {
+    /// The time in seconds for one cycle of the effect.
+    pub period: Option<i64>,
+    /// How long the animation lasts for in seconds. Not specifying a duration makes the animation never stop. Specifying 0 makes the animation stop. Note that there is a known bug where the tile remains in the animation once it has completed if duration is nonzero.
+    pub duration: Option<f64>,
+    /// If true, turn the bulb on if it is not already on.
+    pub power_on: Option<bool>,
+    /// Execute the query fast, without initial state checks and wait for no results.
+    pub fast: Option<bool>,
+}
+impl FlameEffect {
+    /// Returns a new FlameEffect object
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs as lifx;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut flame_effect = lifx::FlameEffect::new();
+    ///     flame_effect.period = Some(10);
+    ///     flame_effect.duration = Some(0);
+    ///     flame_effect.power_on = Some(true);
+    /// 
+    /// }
+    ///  ```
+    pub fn new() -> Self {
+        return FlameEffect{
+            period: None,
+            duration: None,
+            power_on: None,
+            fast: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.period{
+            Some(period) => params.push(("period".to_string(), period.to_string())),
+            None => {}
+        }
+
+        match &self.duration{
+            Some(duration) => params.push(("duration".to_string(), duration.to_string())),
+            None => {}
+        }
+
+        match &self.power_on{
+            Some(power_on) => params.push(("power_on".to_string(), power_on.to_string())),
+            None => {}
+        }
+
+        match &self.fast{
+            Some(fast) => params.push(("fast".to_string(), fast.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+pub fn string_vec_to_params(input: Vec<String>) -> String {
+
+    let mut params = String::new();
+    let mut count = 0;
+    for iput in input {
+        if count == 0 {
+            params = format!("[\"{}\"", iput);
+        } else {
+            params = format!("{}, \"{}\"",params, iput);
+        }
+    }
+
+    params = format!("{}]", params);
+
+    return params;
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
