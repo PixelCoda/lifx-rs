@@ -83,7 +83,7 @@ async fn main() {
 
 ## License
 
-Released under Apache 2.0.
+Released under Apache 2.0 or MIT.
 
 # Support and follow my work by:
 

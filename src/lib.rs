@@ -38,7 +38,7 @@
 //! 
 //! Add the following line to your cargo.toml:
 //! ```
-//! lifx-rs = "0.1.2"
+//! lifx-rs = "0.1.22"
 //! ```
 //! 
 //! Example:
@@ -90,16 +90,14 @@
 //!     off_state.power = Some(format!("off"));
 //!     
 //!     // Turn off all lights
-//!     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+//!     lifx::Light::async_set_state_by_selector(key.clone(), format!("all"), off_state).await;
 //! }
 //! ```
 //! 
 //! 
-//! 
-//! 
 //! ## License
 //! 
-//! Released under Apache 2.0.
+//! Released under Apache 2.0 or MIT.
 //! 
 //! # Support and follow my work by:
 //! 
@@ -120,9 +118,6 @@
 //!  * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
 //!  * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
 //!  * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
-
-
-
 
 use serde_json::json;
 
