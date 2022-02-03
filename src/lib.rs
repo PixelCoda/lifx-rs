@@ -24,6 +24,12 @@
 //! * Set States
 //! * State Delta
 //! * Toggle Power
+//! * Breathe Effect
+//! * Move Effect
+//! * Morph Effect
+//! * Flame Effect
+//! * Pulse Effect
+//! * Effects Off
 //! * Clean (HEV)
 //! * List Scenes
 //! * Validate Color
@@ -32,7 +38,7 @@
 //! 
 //! Add the following line to your cargo.toml:
 //! ```
-//! lifx-rs = "0.1.1"
+//! lifx-rs = "0.1.2"
 //! ```
 //! 
 //! Example:
@@ -69,6 +75,28 @@
 //! 
 //! }
 //! ```
+//! 
+//! 
+//! Async Example:
+//! ```rust
+//! extern crate lifx_rs as lifx;
+//! 
+//! #[tokio::main]
+//! async fn main() {
+//! 
+//!     let key = "xxx".to_string();
+//! 
+//!     let mut off_state = lifx::State::new();
+//!     off_state.power = Some(format!("off"));
+//!     
+//!     // Turn off all lights
+//!     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+//! }
+//! ```
+//! 
+//! 
+//! 
+//! 
 //! ## License
 //! 
 //! Released under Apache 2.0.
@@ -92,6 +120,9 @@
 //!  * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
 //!  * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
 //!  * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
+
+
+
 
 use serde_json::json;
 
@@ -310,7 +341,7 @@ impl Light {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut effects_off = lifx::FlameEffect::new();
+    ///             let mut effects_off = lifx::EffectsOff::new();
     ///             effects_off.power_off = Some(true);
     ///         
     ///             for light in lights {
@@ -344,7 +375,7 @@ impl Light {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut effects_off = lifx::FlameEffect::new();
+    ///     let mut effects_off = lifx::EffectsOff::new();
     ///     effects_off.power_off = Some(true);
     ///     
     ///     // Send morph effect to all lights
@@ -510,7 +541,8 @@ impl Light {
     /// ```
     /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
@@ -531,7 +563,7 @@ impl Light {
     ///             morph_effect.power_on = Some(true);
     ///         
     ///             for light in lights {
-    ///                 let results = light.morph_effect(key.clone(), morph_effect.clone());
+    ///                 let results = light.async_morph_effect(key.clone(), morph_effect.clone()).await;
     ///                 println!("{:?}",results);
     ///             }
     ///         },
@@ -556,7 +588,8 @@ impl Light {
     /// ```
     /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
@@ -572,7 +605,7 @@ impl Light {
     ///     morph_effect.power_on = Some(true);
     ///     
     ///     // Send morph effect to all lights
-    ///     lifx::Light::morph_effect_by_selector(key.clone(), format!("all"), morph_effect);
+    ///     lifx::Light::async_morph_effect_by_selector(key.clone(), format!("all"), morph_effect).await;
     /// }
     ///  ```
     pub async fn async_morph_effect_by_selector(access_token: String, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
@@ -600,7 +633,8 @@ impl Light {
     /// ```
     /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
@@ -616,7 +650,7 @@ impl Light {
     ///             move_effect.power_on = Some(true);
     ///         
     ///             for light in lights {
-    ///                 let results = light.move_effect(key.clone(), move_effect.clone());
+    ///                 let results = light.async_move_effect(key.clone(), move_effect.clone()).await;
     ///                 println!("{:?}",results);
     ///             }
     ///         },
@@ -641,7 +675,8 @@ impl Light {
     /// ```
     /// extern crate lifx_rs as lifx;
     /// 
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
     /// 
@@ -652,7 +687,7 @@ impl Light {
     ///     move_effect.power_on = Some(true);
     ///     
     ///     // Toggle all lights
-    ///     lifx::Light::move_effect_by_selector(key.clone(), format!("all"), move_effect);
+    ///     lifx::Light::async_move_effect_by_selector(key.clone(), format!("all"), move_effect).await;
     /// }
     ///  ```
     pub async fn async_move_effect_by_selector(access_token: String, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
@@ -781,7 +816,7 @@ impl Light {
     ///             state.brightness = Some(1.0);
     ///         
     ///             for light in lights {
-    ///                 let results = light.set_state(key.clone(), state.clone());
+    ///                 let results = light.async_set_state(key.clone(), state.clone()).await;
     ///                 println!("{:?}",results);
     ///             }
     ///         },
@@ -815,7 +850,7 @@ impl Light {
     ///     off_state.power = Some(format!("off"));
     ///     
     ///     // Turn off all lights
-    ///     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+    ///     lifx::Light::async_set_state_by_selector(key.clone(), format!("all"), off_state).await;
     /// }
     ///  ```
     pub async fn async_set_state_by_selector(access_token: String, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
@@ -1161,10 +1196,6 @@ impl Light {
         return Ok(json);
     }
 
-
-    
-
-
     /// Stops animation(s) for the current light
     /// 
     /// # Arguments
@@ -1187,7 +1218,7 @@ impl Light {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
     ///     
-    ///             let mut effects_off = lifx::FlameEffect::new();
+    ///             let mut effects_off = lifx::EffectsOff::new();
     ///             effects_off.power_off = Some(true);
     ///         
     ///             for light in lights {
@@ -1220,7 +1251,7 @@ impl Light {
     /// 
     ///     let key = "xxx".to_string();
     /// 
-    ///     let mut effects_off = lifx::FlameEffect::new();
+    ///     let mut effects_off = lifx::EffectsOff::new();
     ///     effects_off.power_off = Some(true);
     ///     
     ///     // Send morph effect to all lights
@@ -1238,11 +1269,6 @@ impl Light {
         let json = request.json::<LiFxResults>()?;
         return Ok(json);
     }
-
-
-
-
-
 
     /// Activate the flame animation for the current light
     /// 
@@ -1321,48 +1347,6 @@ impl Light {
         let json = request.json::<LiFxResults>()?;
         return Ok(json);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /// Gets ALL lights belonging to the authenticated account
     /// 
