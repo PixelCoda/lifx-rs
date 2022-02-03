@@ -24,7 +24,7 @@ A synchronous + asynchronous library for communicating with the LIFX-API.
 
 Add the following line to your cargo.toml:
 ```
-lifx-rs = "0.1.2"
+lifx-rs = "0.1.22"
 ```
 
 Example:
@@ -76,11 +76,9 @@ async fn main() {
     off_state.power = Some(format!("off"));
     
     // Turn off all lights
-    lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+    lifx::Light::async_set_state_by_selector(key.clone(), format!("all"), off_state).await;
 }
 ```
-
-
 
 
 ## License

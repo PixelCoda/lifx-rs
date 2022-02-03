@@ -1566,10 +1566,6 @@ impl Light {
         return Ok(json);
     }
 
-
-
-
-
     /// Activate the pulse animation for the current light
     /// 
     /// # Arguments
@@ -1651,15 +1647,6 @@ impl Light {
         let json = request.json::<LiFxResults>()?;
         return Ok(json);
     }
-
-
-
-
-
-
-
-
-
 
     /// Sets the state for the current light
     /// 
