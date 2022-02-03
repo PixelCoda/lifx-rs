@@ -12,6 +12,87 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! # lifx-rs
+//! 
+//! ## Description
+//! 
+//! A synchronous + asynchronous library for communicating with the LIFX-API. 
+//! 
+//! ## Supported API Methods:
+//! * List Lights
+//! * Set State
+//! * Set States
+//! * State Delta
+//! * Toggle Power
+//! * Clean (HEV)
+//! * List Scenes
+//! * Validate Color
+//! 
+//! ## How to use library
+//! 
+//! Add the following line to your cargo.toml:
+//! ```
+//! lifx-rs = "0.1.1"
+//! ```
+//! 
+//! Example:
+//! ```rust
+//! extern crate lifx_rs as lifx;
+//! 
+//! fn main() {
+//! 
+//!     let key = "xxx".to_string();
+//!     
+//!     let mut off_state = lifx::State::new();
+//!     off_state.power = Some(format!("off"));
+//! 
+//!     // Turn off all lights
+//!     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+//! 
+//! 
+//!     let all_lights = lifx::Light::list_all(key.clone());
+//!     match all_lights {
+//!         Ok(lights) => {
+//!             println!("{:?}",lights.clone());
+//! 
+//!             let mut state = lifx::State::new();
+//!             state.power = Some(format!("on"));
+//!             state.brightness = Some(1.0);
+//!         
+//!             for light in lights {
+//!                 let results = light.set_state(key.clone(), state.clone());
+//!                 println!("{:?}",results);
+//!             }
+//!         },
+//!         Err(e) => println!("{}",e)
+//!     }
+//! 
+//! }
+//! ```
+//! ## License
+//! 
+//! Released under Apache 2.0.
+//! 
+//! # Support and follow my work by:
+//! 
+//! #### Buying my dope NTFs:
+//!  * https://opensea.io/accounts/PixelCoda
+//! 
+//! #### Checking out my Github:
+//!  * https://github.com/PixelCoda
+//! 
+//! #### Following my facebook page:
+//!  * https://www.facebook.com/pixelcoda/
+//! 
+//! #### Subscribing to my Patreon:
+//!  * https://www.patreon.com/calebsmith_pixelcoda
+//! 
+//! #### Or donating crypto:
+//!  * ADA:    addr1vyjsx8zthl5fks8xjsf6fkrqqsxr4f5tprfwux5zsnz862glwmyr3
+//!  * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
+//!  * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
+//!  * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
+
 use serde_json::json;
 
 use serde::{Serialize, Deserialize};
@@ -19,7 +100,7 @@ use std::convert::TryInto;
 
 pub type Lights = Vec<Light>;
 
-/// Represents your Stripe balance.
+/// Represents a LIFX Light Object
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Light {
@@ -41,6 +122,84 @@ pub struct Light {
     pub errors: Option<Vec<Error>>,
 }
 impl Light {
+
+    /// Asynchronously switch a light to clean mode, with a set duration. 
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut clean = lifx_rs::Clean::new();
+    ///             clean.duration = Some(0);
+    ///             clean.stop = Some(false);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.clean(key.clone(), clean.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_clean(&self, access_token: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_clean_by_selector(access_token, format!("id:{}", self.id), clean).await;
+    }
+
+    /// Asynchronously switch a selected LIFX object to clean mode, with a set duration. 
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut clean = lifx_rs::Clean::new();
+    ///     clean.duration = Some(0);
+    ///     clean.stop = Some(false);
+    ///     
+    ///     // Set all light to clean mode
+    ///     lifx_rs::Light::clean_by_selector(key.clone(), format!("all"), clean);
+    /// }
+    ///  ```
+    pub async fn async_clean_by_selector(access_token: String, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/clean", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&clean.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
+
+
 
     /// Asynchronously gets ALL lights belonging to the authenticated account
     /// 
@@ -166,44 +325,174 @@ impl Light {
         return Ok(json);
     }
 
+    /// Asynchronously sets the state for the selected LIFX object(s)
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `states` - A vector of States with defaults
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut set_states = lifx_rs::States::new();
+    ///     let mut states: Vec<lifx_rs::State> = Vec::new();
+    ///     let mut defaults = lifx_rs::State::new();
+    ///     
+    ///     defaults.brightness = Some(1.0);
+    ///     
+    ///     let mut state_1 = lifx_rs::State::new();
+    ///     state_1.selector = Some(format!("id:xxx"));
+    ///     state_1.power = Some(format!("on"));
+    ///     
+    ///     let mut state_2 = lifx_rs::State::new();
+    ///     state_2.selector = Some(format!("id:xyz"));
+    ///     state_2.power = Some(format!("on"));
+    ///     
+    ///     set_states.states = Some(states);
+    ///     set_states.defaults = Some(defaults);
+    ///     
+    ///     lifx_rs::Light::async_set_states(key.clone(), set_states).await;
+    /// }
+    ///  ```
+    pub async fn async_set_states(access_token: String, states: States) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/state");
+
+        let request = reqwest::blocking::Client::new().put(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .json(&states)
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+    /// Asynchronously set parameters other than power and duration change the state of the lights by the amount specified.
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `delta` - A StateDelta object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut delta = lifx_rs::StateDelta::new();
+    ///     delta.duration = Some(0);
+    ///     delta.power = Some(format!("on"));
+    ///     
+    ///     // Send StateDelta
+    ///     lifx_rs::Light::async_state_delta_by_selector(key.clone(), format!("all"), toggle).await;
+    /// }
+    ///  ```
+    pub async fn async_state_delta_by_selector(access_token: String, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/state/delta", selector);
+
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&delta.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
 
 
 
+    /// Turn off light if on, or turn them on if it is off. 
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut toggle = lifx_rs::Toggle::new();
+    ///             toggle.duration = Some(0);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.toggle(key.clone(), clean.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub async fn async_toggle(&self, access_token: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_toggle_by_selector(access_token, format!("id:{}", self.id), toggle).await;
+    }
 
+    /// Turn off lights if any of them are on, or turn them on if they are all off. 
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut toggle = lifx_rs::Toggle::new();
+    ///     toggle.duration = Some(0);
+    ///     
+    ///     // Toggle all lights
+    ///     lifx_rs::Light::toggle_by_selector(key.clone(), format!("all"), toggle);
+    /// }
+    ///  ```
+    pub async fn async_toggle_by_selector(access_token: String, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/toggle", selector);
 
+        let request = reqwest::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&toggle.to_params())
+            .send().await?;
+    
+        let json = request.json::<LiFxResults>().await?;
+        return Ok(json);
+    }
 
+    // =======================================
+    // END OF ASYNC FUNCTIONS
+    // =======================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // =======================================
+    // BEGINING OF SYNC FUNCTIONS
+    // =======================================
 
     /// This endpoint lets you switch a light to clean mode, with a set duration. 
     /// 
@@ -280,17 +569,6 @@ impl Light {
         let json = request.json::<LiFxResults>()?;
         return Ok(json);
     }
-
-
-
-
-
-
-
-
-
-
-
 
     /// Gets ALL lights belonging to the authenticated account
     /// 
@@ -417,14 +695,170 @@ impl Light {
         return Ok(json);
     }
 
+    /// Sets the state for the selected LIFX object
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `states` - A vector of States with defaults
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut set_states = lifx_rs::States::new();
+    ///     let mut states: Vec<lifx_rs::State> = Vec::new();
+    ///     let mut defaults = lifx_rs::State::new();
+    ///     
+    ///     defaults.brightness = Some(1.0);
+    ///     
+    ///     let mut state_1 = lifx_rs::State::new();
+    ///     state_1.selector = Some(format!("id:xxx"));
+    ///     state_1.power = Some(format!("on"));
+    ///     
+    ///     let mut state_2 = lifx_rs::State::new();
+    ///     state_2.selector = Some(format!("id:xyz"));
+    ///     state_2.power = Some(format!("on"));
+    ///     
+    ///     set_states.states = Some(states);
+    ///     set_states.defaults = Some(defaults);
+    ///     
+    ///     lifx_rs::Light::set_states(key.clone(), set_states);
+    /// }
+    ///  ```
+    pub fn set_states(access_token: String, states: States) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/state");
+
+        let request = reqwest::blocking::Client::new().put(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .json(&states)
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
+
+    /// Set parameters other than power and duration change the state of the lights by the amount specified.
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `delta` - A StateDelta object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut delta = lifx_rs::StateDelta::new();
+    ///     delta.duration = Some(0);
+    ///     delta.power = Some(format!("on"));
+    ///     
+    ///     // Send StateDelta
+    ///     lifx_rs::Light::state_delta_by_selector(key.clone(), format!("all"), toggle);
+    /// }
+    ///  ```
+    pub fn state_delta_by_selector(access_token: String, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/state/delta", selector);
+
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&delta.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
 
 
+    /// Turn off light if on, or turn them on if it is off. 
+    /// 
+    /// # Arguments
+    ///
+    /// * `self` - A Light object.
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let all_lights = lifx_rs::Light::list_all(key.clone());
+    ///     match all_lights {
+    ///         Ok(lights) => {
+    ///             println!("{:?}",lights.clone());
+    ///     
+    ///             let mut toggle = lifx_rs::Toggle::new();
+    ///             toggle.duration = Some(0);
+    ///         
+    ///             for light in lights {
+    ///                 let results = light.toggle(key.clone(), clean.clone());
+    ///                 println!("{:?}",results);
+    ///             }
+    ///         },
+    ///         Err(e) => println!("{}",e)
+    ///     }
+    /// }
+    ///  ```
+    pub fn toggle(&self, access_token: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::toggle_by_selector(access_token, format!("id:{}", self.id), toggle);
+    }
 
+    /// Turn off lights if any of them are on, or turn them on if they are all off. 
+    /// 
+    /// # Arguments
+    ///
+    /// * `access_token` - A personal acces token for authentication with LIFX.
+    /// * `selector` - An LIFX selector ex: all, id:xxx, group_id:xxx
+    /// * `clean` - A Clean object containing the values to set
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate lifx_rs;
+    /// 
+    /// fn main() {
+    /// 
+    ///     let key = "xxx".to_string();
+    /// 
+    ///     let mut toggle = lifx_rs::Toggle::new();
+    ///     toggle.duration = Some(0);
+    ///     
+    ///     // Toggle all lights
+    ///     lifx_rs::Light::toggle_by_selector(key.clone(), format!("all"), toggle);
+    /// }
+    ///  ```
+    pub fn toggle_by_selector(access_token: String, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("https://api.lifx.com/v1/lights/{}/toggle", selector);
 
+        let request = reqwest::blocking::Client::new().post(url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .form(&toggle.to_params())
+            .send()?;
+    
+        let json = request.json::<LiFxResults>()?;
+        return Ok(json);
+    }
 }
 
 pub type Scenes = Vec<Scene>;
 
+/// Represents an LIFX Scene
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Scene {
@@ -455,7 +889,7 @@ impl Scene {
     }
 }
 
-
+/// Represents an LIFX Color
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Color {
@@ -482,64 +916,7 @@ impl Color {
     }
 }
 
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Group {
-    pub id: String,
-    pub name: String,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Location {
-    pub id: String,
-    pub name: String,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Product {
-    pub name: String,
-    pub identifier: String,
-    pub company: String,
-    #[serde(rename = "vendor_id")]
-    pub vendor_id: i64,
-    #[serde(rename = "product_id")]
-    pub product_id: i64,
-    pub capabilities: Capabilities,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Capabilities {
-    #[serde(rename = "has_color")]
-    pub has_color: bool,
-    #[serde(rename = "has_variable_color_temp")]
-    pub has_variable_color_temp: bool,
-    #[serde(rename = "has_ir")]
-    pub has_ir: bool,
-    #[serde(rename = "has_hev")]
-    pub has_hev: bool,
-    #[serde(rename = "has_chain")]
-    pub has_chain: bool,
-    #[serde(rename = "has_matrix")]
-    pub has_matrix: bool,
-    #[serde(rename = "has_multizone")]
-    pub has_multizone: bool,
-    #[serde(rename = "min_kelvin")]
-    pub min_kelvin: i64,
-    #[serde(rename = "max_kelvin")]
-    pub max_kelvin: i64,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Account {
-    pub uuid: String,
-}
-
-
+/// Used to set the duration/state of the HEV Clean array
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Clean {
@@ -571,7 +948,7 @@ impl Clean {
 
 }
 
-
+/// Used to descripe the state of an LIFX Light Source
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct State {
@@ -632,8 +1009,282 @@ impl State {
 
 }
 
+/// Used to set the duration of a Toggle event
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct Toggle {
+    pub duration: Option<i64>
+}
+impl Toggle {
+    pub fn new() -> Self {
+        return Toggle{
+            duration: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.duration{
+            Some(duration) => params.push(("duration".to_string(), duration.to_string())),
+            None => {}
+        }
+        return params;
+    }
+
+
+}
+
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct States {
+    pub states: Option<Vec<State>>,
+    pub defaults: Option<State>,
+}
+impl States {
+    pub fn new() -> Self {
+        return States{
+            states: None,
+            defaults: None
+        };
+    }
+
+    // fn to_params(&self) -> Vec<(String, String)> {
+    //     let mut params: Vec<(String, String)> = vec![];
+    //     match &self.duration{
+    //         Some(duration) => params.push(("duration".to_string(), duration.to_string())),
+    //         None => {}
+    //     }
+    //     return params;
+    // }
+
+
+}
+
+/// Defines parameters for StateDelta
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StateDelta {
+    /// The power state you want to set on the selector. on or off
+    pub power: Option<String>,
+    /// How long in seconds you want the power action to take. Range: 0.0 – 3155760000.0 (100 years)
+    pub duration: Option<f64>,
+    /// The maximum brightness of the infrared channel.
+    pub infrared: Option<f64>,
+    /// Rotate the hue by this angle in degrees. Range: -360.0 – 360.0 degrees
+    pub hue: Option<f64>,
+    /// Change the saturation by this additive amount; the resulting saturation is clipped to [0, 1].
+    pub saturation: Option<f64>,
+    /// Change the brightness by this additive amount; the resulting brightness is clipped to [0, 1].
+    pub brightness: Option<f64>,
+    /// Change the kelvin by this additive amount; the resulting kelvin is clipped to [2500, 9000].
+    pub kelvin: Option<i64>,
+    /// Execute the query fast, without initial state checks and wait for no results.
+    pub fast: Option<bool>,
+}
+impl StateDelta {
+    pub fn new() -> Self {
+        return StateDelta{
+            power: None,
+            duration: None,
+            infrared: None,
+            hue: None,
+            saturation: None,
+            brightness: None,
+            kelvin: None,
+            fast: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.power{
+            Some(power) => params.push(("power".to_string(), power.to_string())),
+            None => {}
+        }
+
+        match &self.duration{
+            Some(duration) => params.push(("duration".to_string(), duration.to_string())),
+            None => {}
+        }
+
+        match &self.infrared{
+            Some(infrared) => params.push(("infrared".to_string(), infrared.to_string())),
+            None => {}
+        }
+
+        match &self.hue{
+            Some(hue) => params.push(("hue".to_string(), hue.to_string())),
+            None => {}
+        }
+
+        match &self.saturation{
+            Some(saturation) => params.push(("saturation".to_string(), saturation.to_string())),
+            None => {}
+        }
+
+        match &self.brightness{
+            Some(brightness) => params.push(("brightness".to_string(), brightness.to_string())),
+            None => {}
+        }
+
+        match &self.kelvin{
+            Some(kelvin) => params.push(("kelvin".to_string(), kelvin.to_string())),
+            None => {}
+        }
+
+        match &self.fast{
+            Some(fast) => params.push(("fast".to_string(), fast.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+/// Defines parameters for the BreatheEffect
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BreatheEffect {
+    /// The color to use for the breathe effect.
+    pub color: Option<String>,
+    /// The color to start the effect from. If this parameter is omitted then the color the bulb is currently set to is used instead.
+    pub from_color: Option<String>,
+    /// The time in seconds for one cycle of the effect.
+    pub period: Option<f64>,
+    /// The number of times to repeat the effect.
+    pub cycles: Option<f64>,
+    /// If false set the light back to its previous value when effect ends, if true leave the last effect color.
+    pub persist: Option<bool>,
+    /// If true, turn the bulb on if it is not already on.
+    pub power_on: Option<bool>,
+    /// Defines where in a period the target color is at its maximum. Minimum 0.0, maximum 1.0.
+    pub peak: Option<f64>,
+}
+impl BreatheEffect {
+    pub fn new() -> Self {
+        return BreatheEffect{
+            color: None,
+            from_color: None,
+            period: None,
+            cycles: None,
+            persist: None,
+            power_on: None,
+            peak: None
+        };
+    }
+
+    fn to_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = vec![];
+        match &self.color{
+            Some(color) => params.push(("color".to_string(), color.to_string())),
+            None => {}
+        }
+
+        match &self.from_color{
+            Some(from_color) => params.push(("from_color".to_string(), from_color.to_string())),
+            None => {}
+        }
+
+        match &self.period{
+            Some(period) => params.push(("period".to_string(), period.to_string())),
+            None => {}
+        }
+
+        match &self.cycles{
+            Some(cycles) => params.push(("cycles".to_string(), cycles.to_string())),
+            None => {}
+        }
+
+        match &self.persist{
+            Some(persist) => params.push(("persist".to_string(), persist.to_string())),
+            None => {}
+        }
+
+        match &self.power_on{
+            Some(power_on) => params.push(("power_on".to_string(), power_on.to_string())),
+            None => {}
+        }
+
+        match &self.peak{
+            Some(peak) => params.push(("peak".to_string(), peak.to_string())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Group {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Location {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Product {
+    pub name: String,
+    pub identifier: String,
+    pub company: String,
+    #[serde(rename = "vendor_id")]
+    pub vendor_id: i64,
+    #[serde(rename = "product_id")]
+    pub product_id: i64,
+    pub capabilities: Capabilities,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Capabilities {
+    #[serde(rename = "has_color")]
+    pub has_color: bool,
+    #[serde(rename = "has_variable_color_temp")]
+    pub has_variable_color_temp: bool,
+    #[serde(rename = "has_ir")]
+    pub has_ir: bool,
+    #[serde(rename = "has_hev")]
+    pub has_hev: bool,
+    #[serde(rename = "has_chain")]
+    pub has_chain: bool,
+    #[serde(rename = "has_matrix")]
+    pub has_matrix: bool,
+    #[serde(rename = "has_multizone")]
+    pub has_multizone: bool,
+    #[serde(rename = "min_kelvin")]
+    pub min_kelvin: i64,
+    #[serde(rename = "max_kelvin")]
+    pub max_kelvin: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Account {
+    pub uuid: String,
+}
+
+
+
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
 pub struct Error {
     pub field: String,
     pub message: Vec<String>,
@@ -642,6 +1293,7 @@ pub struct Error {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[doc(hidden)]
 pub struct LiFxResults {
     pub results: Option<Vec<LiFxResult>>,
     pub error: Option<String>
@@ -649,6 +1301,7 @@ pub struct LiFxResults {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[doc(hidden)]
 pub struct LiFxResult {
     pub id: String,
     pub label: String,
