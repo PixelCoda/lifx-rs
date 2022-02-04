@@ -1742,7 +1742,7 @@ impl RawMessage {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ProductInfo {
     pub name: &'static str,
     pub color: bool,
