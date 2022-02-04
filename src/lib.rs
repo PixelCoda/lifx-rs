@@ -38,7 +38,7 @@
 //! 
 //! Add the following line to your cargo.toml:
 //! ```
-//! lifx-rs = "0.1.22"
+//! lifx-rs = "0.1.23"
 //! ```
 //! 
 //! Example:
@@ -118,6 +118,8 @@
 //!  * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
 //!  * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
 //!  * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
+
+pub mod lan;
 
 use serde_json::json;
 

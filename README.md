@@ -24,7 +24,7 @@ A synchronous + asynchronous library for communicating with the LIFX-API.
 
 Add the following line to your cargo.toml:
 ```
-lifx-rs = "0.1.22"
+lifx-rs = "0.1.23"
 ```
 
 Example:
