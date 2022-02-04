@@ -1032,7 +1032,7 @@ impl Message {
 /// When a light is displaying colors, kelvin is ignored.
 ///
 /// To display "pure" colors, set saturation to full (65535).
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HSBK {
     pub hue: u16,
     pub saturation: u16,
