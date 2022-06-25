@@ -25,6 +25,9 @@ A synchronous + asynchronous library for communicating with the official LIFX-AP
 * Set State
 * Set States
 
+## To use offline use the Un-Official API Server:
+[lifx-api-server](https://crates.io/crates/lifx-api-server)
+
 ## How to use library
 
 Add the following line to your cargo.toml:
