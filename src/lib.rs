@@ -38,12 +38,15 @@
 //! * List Lights
 //! * Set State
 //! * Set States
+//! 
+//! ## To use offline use the Un-Official API Server:
+//! [lifx-api-server](https://crates.io/crates/lifx-api-server)
 //!
 //! ## How to use library
 //!
 //! Add the following line to your cargo.toml:
 //! ```
-//! lifx-rs = "0.1.27"
+//! lifx-rs = "0.1.28"
 //! ```
 //!
 //! Example:

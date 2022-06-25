@@ -20,7 +20,7 @@ A synchronous + asynchronous library for communicating with the official LIFX-AP
 * List Scenes
 * Validate Color
 
-## Unofficial Offline API Supported Methods:
+## Un-Official Offline API Supported Methods:
 * List Lights
 * Set State
 * Set States
@@ -32,7 +32,7 @@ A synchronous + asynchronous library for communicating with the official LIFX-AP
 
 Add the following line to your cargo.toml:
 ```
-lifx-rs = "0.1.27"
+lifx-rs = "0.1.28"
 ```
 
 Example:
