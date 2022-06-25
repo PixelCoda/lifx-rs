@@ -1,6 +1,6 @@
 [package]
 name = "lifx-rs"
-description = "A synchronous + asynchronous library for communicating with the LIFX-API."
+description = "A synchronous + asynchronous library for communicating with the official LIFX-API and the unoffical offline API."
 version = "0.1.26"
 edition = "2018"
 authors = ["Caleb Mitchell Smith-Woolrich <calebsmithwoolrich@gmail.com>"]

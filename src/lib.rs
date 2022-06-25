@@ -13,12 +13,12 @@
 // limitations under the License.
 
 //! # lifx-rs
-//! 
+//!
 //! ## Description
-//! 
-//! A synchronous + asynchronous library for communicating with the LIFX-API. 
-//! 
-//! ## Supported API Methods:
+//!
+//! A synchronous + asynchronous library for communicating with the official LIFX-API and the unoffical offline API. 
+//!
+//! ## LIFX-API Supported Methods:
 //! * List Lights
 //! * Set State
 //! * Set States
@@ -33,91 +33,128 @@
 //! * Clean (HEV)
 //! * List Scenes
 //! * Validate Color
-//! 
+//!
+//! ## Unofficial Offline API Supported Methods:
+//! * List Lights
+//! * Set State
+//! * Set States
+//!
 //! ## How to use library
-//! 
+//!
 //! Add the following line to your cargo.toml:
 //! ```
-//! lifx-rs = "0.1.23"
+//! lifx-rs = "0.1.27"
 //! ```
-//! 
+//!
 //! Example:
 //! ```rust
 //! extern crate lifx_rs as lifx;
-//! 
+//!
 //! fn main() {
-//! 
+//!
 //!     let key = "xxx".to_string();
-//!     
+//!  
+//!     let mut api_endpoints: Vec<String> = Vec::new();
+//!  
+//!     // Official API
+//!     api_endpoints.push(format!("https://api.lifx.com"));
+//!
+//!     // lifx-server-api (Un-Official)
+//!     api_endpoints.push(format!("http://localhost:8089"));
+//!
+//!     let config = lifx::LifxConfig{
+//!         access_token: key.clone(),
+//!         api_endpoints: api_endpoints
+//!     };
+//!
+//!     // Build an "OffState" to set
 //!     let mut off_state = lifx::State::new();
 //!     off_state.power = Some(format!("off"));
-//! 
+//!
 //!     // Turn off all lights
-//!     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
-//! 
-//! 
-//!     let all_lights = lifx::Light::list_all(key.clone());
+//!     lifx::Light::set_state_by_selector(config.clone(), format!("all"), off_state);
+//!
+//!     let all_lights = lifx::Light::list_all(config.clone());
 //!     match all_lights {
 //!         Ok(lights) => {
 //!             println!("{:?}",lights.clone());
-//! 
+//!
 //!             let mut state = lifx::State::new();
 //!             state.power = Some(format!("on"));
 //!             state.brightness = Some(1.0);
-//!         
+//!      
 //!             for light in lights {
-//!                 let results = light.set_state(key.clone(), state.clone());
+//!                 let results = light.set_state(config.clone(), state.clone());
 //!                 println!("{:?}",results);
 //!             }
 //!         },
 //!         Err(e) => println!("{}",e)
 //!     }
-//! 
+//!
 //! }
+//!
 //! ```
-//! 
-//! 
+//!
+//!
 //! Async Example:
 //! ```rust
 //! extern crate lifx_rs as lifx;
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() {
-//! 
+//!
 //!     let key = "xxx".to_string();
-//! 
+//!  
+//!     let mut api_endpoints: Vec<String> = Vec::new();
+//!  
+//!     // Official API
+//!     api_endpoints.push(format!("https://api.lifx.com"));
+//!
+//!     // lifx-server-api (Un-Official)
+//!     api_endpoints.push(format!("http://localhost:8089"));
+//!
+//!     let config = lifx::LifxConfig{
+//!         access_token: key.clone(),
+//!         api_endpoints: api_endpoints
+//!     };
+//!
+//!     // Build "OffState" to set
 //!     let mut off_state = lifx::State::new();
 //!     off_state.power = Some(format!("off"));
-//!     
+//!  
 //!     // Turn off all lights
-//!     lifx::Light::async_set_state_by_selector(key.clone(), format!("all"), off_state).await;
+//!     lifx::Light::async_set_state_by_selector(config.clone(), format!("all"), off_state).await;
 //! }
 //! ```
-//! 
-//! 
+//!
+//!
 //! ## License
-//! 
+//!
 //! Released under Apache 2.0 or MIT.
-//! 
+//!
 //! # Support and follow my work by:
-//! 
+//!
 //! #### Buying my dope NTFs:
 //!  * https://opensea.io/accounts/PixelCoda
-//! 
+//!
 //! #### Checking out my Github:
 //!  * https://github.com/PixelCoda
-//! 
+//!
 //! #### Following my facebook page:
 //!  * https://www.facebook.com/pixelcoda/
-//! 
+//!
 //! #### Subscribing to my Patreon:
 //!  * https://www.patreon.com/calebsmith_pixelcoda
-//! 
+//!
 //! #### Or donating crypto:
-//!  * ADA:    addr1vyjsx8zthl5fks8xjsf6fkrqqsxr4f5tprfwux5zsnz862glwmyr3
-//!  * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
-//!  * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
-//!  * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
+//!  * ADA: addr1qyp299a45tgvveh83tcxlf7ds3yaeh969yt3v882lvxfkkv4e0f46qvr4wzj8ty5c05jyffzq8a9pfwz9dl6m0raac7s4rac48
+//!  * ALGO: VQ5EK4GA3IUTGSPNGV64UANBUVFAIVBXVL5UUCNZSDH544XIMF7BAHEDM4
+//!  * ATOM: cosmos1wm7lummcealk0fxn3x9tm8hg7xsyuz06ul5fw9
+//!  * BTC: bc1qh5p3rff4vxnv23vg0hw8pf3gmz3qgc029cekxz
+//!  * ETH: 0x7A66beaebF7D0d17598d37525e63f524CfD23452
+//!  * ERC20: 0x7A66beaebF7D0d17598d37525e63f524CfD23452
+//!  * XLM: GCJAUMCO2L7PTYMXELQ6GHBTF25MCQKEBNSND2C4QMUPTSVCPEN3LCOG
+//!  * XTZ: tz1SgJppPn56whprsDDGcqR4fxqCr2PXvg1R
 
 pub mod lan;
 
@@ -125,6 +162,21 @@ use serde_json::json;
 
 use serde::{Serialize, Deserialize};
 use std::convert::TryInto;
+
+
+
+
+/// Represents a LIFX Config Object
+/// Supports two api_endpoints.....if the first one fails...falls back on second api
+/// TODO - Support unlimited api_endpoints
+/// TODO - Use multithreaded timeout to detect primary api failures faster
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LifxConfig {
+    pub access_token: String,
+    pub api_endpoints: Vec<String>,
+}
+
 
 pub type Lights = Vec<Light>;
 
@@ -168,8 +220,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -190,8 +251,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_breathe_effect(&self, access_token: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_breathe_effect_by_selector(access_token, format!("id:{}", self.id), breathe).await;
+    pub async fn async_breathe_effect(&self, config: LifxConfig, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_breathe_effect_by_selector(config, format!("id:{}", self.id), breathe).await;
     }
 
     /// Asynchronously activate the breathe animation for the selected light(s)
@@ -211,6 +272,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut breathe = lifx::BreatheEffect::new();
     ///     breathe.color = Some(format!("red"));
@@ -223,16 +293,44 @@ impl Light {
     ///     lifx::Light::async_breathe_effect_by_selector(key.clone(), format!("all"), breathe).await;
     /// }
     ///  ```
-    pub async fn async_breathe_effect_by_selector(access_token: String, selector: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/breathe", selector);
+    pub async fn async_breathe_effect_by_selector(config: LifxConfig, selector: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/breathe", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&breathe.to_params())
-            .send().await?;
+            .send().await;
+            
+        match request{
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/breathe", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&breathe.to_params())
+                        .send().await;
+                        
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
 
@@ -253,8 +351,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -272,8 +379,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_clean(&self, access_token: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_clean_by_selector(access_token, format!("id:{}", self.id), clean).await;
+    pub async fn async_clean(&self, config: LifxConfig, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_clean_by_selector(config, format!("id:{}", self.id), clean).await;
     }
 
     /// Asynchronously switch a selected LIFX object to clean mode, with a set duration. 
@@ -293,6 +400,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut clean = lifx::Clean::new();
     ///     clean.duration = Some(0);
@@ -302,16 +418,44 @@ impl Light {
     ///     lifx::Light::async_clean_by_selector(key.clone(), format!("all"), clean).await;
     /// }
     ///  ```
-    pub async fn async_clean_by_selector(access_token: String, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/clean", selector);
+    pub async fn async_clean_by_selector(config: LifxConfig, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/clean", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&clean.to_params())
-            .send().await?;
+            .send().await;
+
+        match request{
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/clean", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&clean.to_params())
+                        .send().await;
+            
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
 
@@ -332,8 +476,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -350,8 +503,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_effects_off(&self, access_token: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_effects_off_by_selector(access_token, format!("id:{}", self.id), effects_off).await;
+    pub async fn async_effects_off(&self, config: LifxConfig, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_effects_off_by_selector(config, format!("id:{}", self.id), effects_off).await;
     }
 
     /// Stops animation(s) for the selected light(s)
@@ -371,6 +524,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut effects_off = lifx::EffectsOff::new();
     ///     effects_off.power_off = Some(true);
@@ -379,16 +541,45 @@ impl Light {
     ///     lifx::Light::async_effects_off_by_selector(key.clone(), format!("all"), effects_off).await;
     /// }
     ///  ```
-    pub async fn async_effects_off_by_selector(access_token: String, selector: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/off", selector);
+    pub async fn async_effects_off_by_selector(config: LifxConfig, selector: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/off", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&effects_off.to_params())
-            .send().await?;
+            .send().await;
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/off", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&effects_off.to_params())
+                        .send().await;
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
 
@@ -410,8 +601,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -430,8 +630,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_flame_effect(&self, access_token: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_flame_effect_by_selector(access_token, format!("id:{}", self.id), flame_effect).await;
+    pub async fn async_flame_effect(&self, config: LifxConfig, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_flame_effect_by_selector(config, format!("id:{}", self.id), flame_effect).await;
     }
 
     /// Activate the flame animation for the selected light(s)
@@ -451,6 +651,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut flame_effect = lifx::FlameEffect::new();
     ///     flame_effect.period = Some(10);
@@ -461,16 +670,44 @@ impl Light {
     ///     lifx::Light::async_flame_effect_by_selector(key.clone(), format!("all"), flame_effect).await;
     /// }
     ///  ```
-    pub async fn async_flame_effect_by_selector(access_token: String, selector: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/flame", selector);
+    pub async fn async_flame_effect_by_selector(config: LifxConfig, selector: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/flame", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&flame_effect.to_params())
-            .send().await?;
+            .send().await;
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/flame", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&flame_effect.to_params())
+                        .send().await;
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
 
@@ -490,12 +727,21 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::async_list_all(key).await?;
+    ///     let all_lights = lifx::Light::async_list_all(config).await?;
     /// }
     ///  ```
-    pub async fn async_list_all(access_token: String) -> Result<Lights, reqwest::Error> {
-        return Self::async_list_by_selector(access_token, format!("all")).await;
+    pub async fn async_list_all(config: LifxConfig) -> Result<Lights, reqwest::Error> {
+        return Self::async_list_by_selector(config, format!("all")).await;
     }
 
     /// Asynchronously gets lights belonging to the authenticated account. Filtering the lights using selectors. Properties such as id, label, group and location can be used in selectors.
@@ -514,15 +760,45 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let all_lights = lifx::Light::async_list_by_selector(key, format!("all")).await?;
     /// }
     ///  ```
-    pub async fn async_list_by_selector(access_token: String, selector: String) -> Result<Lights, reqwest::Error> {
-        let mut url = format!("https://api.lifx.com/v1/lights/{}", selector);
-        let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send().await?;
-        let json = request.json::<Lights>().await?;
-        return Ok(json);
+    pub async fn async_list_by_selector(config: LifxConfig, selector: String) -> Result<Lights, reqwest::Error> {
+        let mut url = format!("{}/v1/lights/{}", config.api_endpoints[0], selector);
+        let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
+        match request {
+            Ok(req) => {
+                let json = req.json::<Lights>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let mut url = format!("{}/v1/lights/{}", config.api_endpoints[1], selector);
+                    let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<Lights>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     }
 
     /// Asynchronously activate the morph animation for the current light
@@ -542,8 +818,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -568,8 +853,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_morph_effect(&self, access_token: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_morph_effect_by_selector(access_token, format!("id:{}", self.id), morph_effect).await;
+    pub async fn async_morph_effect(&self, config: LifxConfig, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_morph_effect_by_selector(config, format!("id:{}", self.id), morph_effect).await;
     }
 
     /// Asynchronously activate the morph animation for the selected light(s)
@@ -589,6 +874,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut morph_effect = lifx::MorphEffect::new();
     ///     morph_effect.period = Some(10);
@@ -605,16 +899,40 @@ impl Light {
     ///     lifx::Light::async_morph_effect_by_selector(key.clone(), format!("all"), morph_effect).await;
     /// }
     ///  ```
-    pub async fn async_morph_effect_by_selector(access_token: String, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/morph", selector);
-
+    pub async fn async_morph_effect_by_selector(config: LifxConfig, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/morph", config.api_endpoints[0], selector);
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&morph_effect.to_params())
-            .send().await?;
+            .send().await;
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/morph", config.api_endpoints[1], selector);
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&morph_effect.to_params())
+                        .send().await;
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
     /// Asynchronously activate the move animation for the current light
@@ -634,8 +952,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -655,8 +982,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_move_effect(&self, access_token: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_move_effect_by_selector(access_token, format!("id:{}", self.id), move_effect).await;
+    pub async fn async_move_effect(&self, config: LifxConfig, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_move_effect_by_selector(config, format!("id:{}", self.id), move_effect).await;
     }
 
     /// Asynchronously activate the move animation for the selected light(s)
@@ -676,6 +1003,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut move_effect = lifx::MoveEffect::new();
     ///     move_effect.direction = Some(format!("forward")); // or backward
@@ -687,16 +1023,44 @@ impl Light {
     ///     lifx::Light::async_move_effect_by_selector(key.clone(), format!("all"), move_effect).await;
     /// }
     ///  ```
-    pub async fn async_move_effect_by_selector(access_token: String, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/move", selector);
+    pub async fn async_move_effect_by_selector(config: LifxConfig, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/move", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&move_effect.to_params())
-            .send().await?;
+            .send().await;
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/move", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&move_effect.to_params())
+                        .send().await;
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
     /// Asynchronously activate the pulse animation for the current light
@@ -716,8 +1080,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -738,8 +1111,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_pulse_effect(&self, access_token: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_pulse_effect_by_selector(access_token, format!("id:{}", self.id), pulse_effect).await;
+    pub async fn async_pulse_effect(&self, config: LifxConfig, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_pulse_effect_by_selector(config, format!("id:{}", self.id), pulse_effect).await;
     }
 
     /// Asynchronously activate the pulse animation for the selected light(s)
@@ -759,6 +1132,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut pulse = lifx::PulseEffect::new();
     ///     pulse.color = Some(format!("red"));
@@ -771,16 +1153,46 @@ impl Light {
     ///     lifx::Light::async_pulse_effect_by_selector(key.clone(), format!("all"), pulse).await;
     /// }
     ///  ```
-    pub async fn async_pulse_effect_by_selector(access_token: String, selector: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/pulse", selector);
+    pub async fn async_pulse_effect_by_selector(config: LifxConfig, selector: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/pulse", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&pulse_effect.to_params())
-            .send().await?;
+            .send().await;
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/pulse", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&pulse_effect.to_params())
+                        .send().await;
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                
+            
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
 
@@ -802,8 +1214,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -821,8 +1242,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_set_state(&self, access_token: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_set_state_by_selector(access_token, format!("id:{}", self.id), state).await;
+    pub async fn async_set_state(&self, config: LifxConfig, state: State) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_set_state_by_selector(config, format!("id:{}", self.id), state).await;
     }
 
     /// Asynchronously sets the state for the selected LIFX object
@@ -842,6 +1263,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut off_state = lifx::State::new();
     ///     off_state.power = Some(format!("off"));
@@ -850,16 +1280,44 @@ impl Light {
     ///     lifx::Light::async_set_state_by_selector(key.clone(), format!("all"), off_state).await;
     /// }
     ///  ```
-    pub async fn async_set_state_by_selector(access_token: String, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/state", selector);
+    pub async fn async_set_state_by_selector(config: LifxConfig, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/state", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().put(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&state.to_params())
-            .send().await?;
+            .send().await;
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/state", config.api_endpoints[0], selector);
+
+                    let request = reqwest::Client::new().put(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&state.to_params())
+                        .send().await;
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                          return Err(err2);  
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
     /// Asynchronously sets the state for the selected LIFX object(s)
@@ -878,6 +1336,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut set_states = lifx::States::new();
     ///     let mut states: Vec<lifx::State> = Vec::new();
@@ -899,16 +1366,47 @@ impl Light {
     ///     lifx::Light::async_set_states(key.clone(), set_states).await;
     /// }
     ///  ```
-    pub async fn async_set_states(access_token: String, states: States) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/state");
+    pub async fn async_set_states(config: LifxConfig, states: States) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/state", config.api_endpoints[0]);
 
         let request = reqwest::blocking::Client::new().put(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .json(&states)
-            .send()?;
+            .send();
+
+        match request{
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(e) => {
+                if config.api_endpoints.len() > 1 {
+
+                    let url = format!("{}/v1/lights/state", config.api_endpoints[1]);
+
+                    let request = reqwest::blocking::Client::new().put(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .json(&states)
+                        .send();
+            
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(e2) => {
+                            return Err(e2);
+                        }
+                    }
+
+
+                } else {
+                    return Err(e);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// Asynchronously set parameters other than power and duration change the state of the lights by the amount specified.
@@ -928,6 +1426,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut delta = lifx::StateDelta::new();
     ///     delta.duration = Some(0);
@@ -937,16 +1444,44 @@ impl Light {
     ///     lifx::Light::async_state_delta_by_selector(key.clone(), format!("all"), toggle).await;
     /// }
     ///  ```
-    pub async fn async_state_delta_by_selector(access_token: String, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/state/delta", selector);
+    pub async fn async_state_delta_by_selector(config: LifxConfig, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/state/delta", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&delta.to_params())
-            .send().await?;
+            .send().await;
+
+        match request{
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/state/delta", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&delta.to_params())
+                        .send().await;
+            
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2)
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
 
@@ -968,8 +1503,17 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -986,8 +1530,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub async fn async_toggle(&self, access_token: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::async_toggle_by_selector(access_token, format!("id:{}", self.id), toggle).await;
+    pub async fn async_toggle(&self, config: LifxConfig, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::async_toggle_by_selector(config, format!("id:{}", self.id), toggle).await;
     }
 
     /// Turn off lights if any of them are on, or turn them on if they are all off. 
@@ -1007,6 +1551,15 @@ impl Light {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut toggle = lifx_rs::Toggle::new();
     ///     toggle.duration = Some(0);
@@ -1015,16 +1568,44 @@ impl Light {
     ///     lifx_rs::Light::async_toggle_by_selector(key.clone(), format!("all"), toggle).await?;
     /// }
     ///  ```
-    pub async fn async_toggle_by_selector(access_token: String, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/toggle", selector);
+    pub async fn async_toggle_by_selector(config: LifxConfig, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/toggle", config.api_endpoints[0], selector);
 
         let request = reqwest::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&toggle.to_params())
-            .send().await?;
+            .send().await;
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/toggle", config.api_endpoints[1], selector);
+
+                    let request = reqwest::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&toggle.to_params())
+                        .send().await;
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>().await?;
-        return Ok(json);
+
     }
 
     // =======================================
@@ -1051,8 +1632,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1073,8 +1663,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn breathe_effect(&self, access_token: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::breathe_by_selector_effect(access_token, format!("id:{}", self.id), breathe);
+    pub fn breathe_effect(&self, config: LifxConfig, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::breathe_by_selector_effect(config, format!("id:{}", self.id), breathe);
     }
 
     /// Activate the breathe animation for the selected light(s)
@@ -1093,6 +1683,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut breathe = lifx::BreatheEffect::new();
     ///     breathe.color = Some(format!("red"));
@@ -1105,16 +1704,44 @@ impl Light {
     ///     lifx::Light::breathe_by_selector_effect(key.clone(), format!("all"), breathe);
     /// }
     ///  ```
-    pub fn breathe_by_selector_effect(access_token: String, selector: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/breathe", selector);
+    pub fn breathe_by_selector_effect(config: LifxConfig, selector: String, breathe: BreatheEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/breathe", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&breathe.to_params())
-            .send()?;
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(e) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/breathe", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&breathe.to_params())
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(e2) => {
+                            return Err(e2);
+                        }
+                    }
+                } else {
+                    return Err(e);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// This endpoint lets you switch a light to clean mode, with a set duration. 
@@ -1133,8 +1760,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1152,8 +1788,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn clean(&self, access_token: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::clean_by_selector(access_token, format!("id:{}", self.id), clean);
+    pub fn clean(&self, config: LifxConfig, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::clean_by_selector(config, format!("id:{}", self.id), clean);
     }
 
     /// This endpoint lets you switch a selected LIFX object to clean mode, with a set duration. 
@@ -1172,6 +1808,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut clean = lifx::Clean::new();
     ///     clean.duration = Some(0);
@@ -1181,16 +1826,44 @@ impl Light {
     ///     lifx::Light::clean_by_selector(key.clone(), format!("all"), clean);
     /// }
     ///  ```
-    pub fn clean_by_selector(access_token: String, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/clean", selector);
+    pub fn clean_by_selector(config: LifxConfig, selector: String, clean: Clean) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/clean", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&clean.to_params())
-            .send()?;
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/clean", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&clean.to_params())
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// Stops animation(s) for the current light
@@ -1209,8 +1882,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1227,8 +1909,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn effects_off(&self, access_token: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::effects_off_by_selector(access_token, format!("id:{}", self.id), effects_off);
+    pub fn effects_off(&self, config: LifxConfig, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::effects_off_by_selector(config, format!("id:{}", self.id), effects_off);
     }
 
     /// Stops animation(s) for the selected light(s)
@@ -1247,6 +1929,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut effects_off = lifx::EffectsOff::new();
     ///     effects_off.power_off = Some(true);
@@ -1255,16 +1946,44 @@ impl Light {
     ///     lifx::Light::effects_off_by_selector(key.clone(), format!("all"), effects_off);
     /// }
     ///  ```
-    pub fn effects_off_by_selector(access_token: String, selector: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/off", selector);
+    pub fn effects_off_by_selector(config: LifxConfig, selector: String, effects_off: EffectsOff) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/off", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&effects_off.to_params())
-            .send()?;
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/off", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&effects_off.to_params())
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// Activate the flame animation for the current light
@@ -1283,8 +2002,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1303,8 +2031,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn flame_effect(&self, access_token: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::flame_effect_by_selector(access_token, format!("id:{}", self.id), flame_effect);
+    pub fn flame_effect(&self, config: LifxConfig, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::flame_effect_by_selector(config, format!("id:{}", self.id), flame_effect);
     }
 
     /// Activate the flame animation for the selected light(s)
@@ -1323,6 +2051,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut flame_effect = lifx::FlameEffect::new();
     ///     flame_effect.period = Some(10);
@@ -1333,16 +2070,44 @@ impl Light {
     ///     lifx::Light::flame_effect_by_selector(key.clone(), format!("all"), flame_effect);
     /// }
     ///  ```
-    pub fn flame_effect_by_selector(access_token: String, selector: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/flame", selector);
+    pub fn flame_effect_by_selector(config: LifxConfig, selector: String, flame_effect: FlameEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/flame", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&flame_effect.to_params())
-            .send()?;
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/flame", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&flame_effect.to_params())
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// Gets ALL lights belonging to the authenticated account
@@ -1359,12 +2124,21 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key)?;
+    ///     let all_lights = lifx::Light::list_all(config)?;
     /// }
     ///  ```
-    pub fn list_all(access_token: String) -> Result<Lights, reqwest::Error> {
-        return Self::list_by_selector(access_token, format!("all"));
+    pub fn list_all(config: LifxConfig) -> Result<Lights, reqwest::Error> {
+        return Self::list_by_selector(config, format!("all"));
     }
 
     /// Gets lights belonging to the authenticated account. Filtering the lights using selectors. Properties such as id, label, group and location can be used in selectors.
@@ -1382,15 +2156,46 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let all_lights = lifx::Light::list_by_selector(key, format!("all"))?;
     /// }
     ///  ```
-    pub fn list_by_selector(access_token: String, selector: String) -> Result<Lights, reqwest::Error> {
-        let mut url = format!("https://api.lifx.com/v1/lights/{}", selector);
-        let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send()?;
-        let json = request.json::<Lights>()?;
-        return Ok(json);
+    pub fn list_by_selector(config: LifxConfig, selector: String) -> Result<Lights, reqwest::Error> {
+        let url = format!("{}/v1/lights/{}", config.api_endpoints[0], selector);
+        let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
+        match request {
+            Ok(req) => {
+                let json = req.json::<Lights>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}", config.api_endpoints[1], selector);
+                    let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<Lights>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
     }
 
     /// Activate the morph animation for the current light
@@ -1409,8 +2214,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1435,8 +2249,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn morph_effect(&self, access_token: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::morph_effect_by_selector(access_token, format!("id:{}", self.id), morph_effect);
+    pub fn morph_effect(&self, config: LifxConfig, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::morph_effect_by_selector(config, format!("id:{}", self.id), morph_effect);
     }
 
     /// Activate the morph animation for the selected light(s)
@@ -1455,6 +2269,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut morph_effect = lifx::MorphEffect::new();
     ///     morph_effect.period = Some(10);
@@ -1471,16 +2294,35 @@ impl Light {
     ///     lifx::Light::morph_effect_by_selector(key.clone(), format!("all"), morph_effect);
     /// }
     ///  ```
-    pub fn morph_effect_by_selector(access_token: String, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/morph", selector);
+    pub fn morph_effect_by_selector(config: LifxConfig, selector: String, morph_effect: MorphEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/morph", config.api_endpoints[0], selector);
+        let request = reqwest::blocking::Client::new().post(url).header("Authorization", format!("Bearer {}", config.access_token)).form(&morph_effect.to_params()).send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/morph", config.api_endpoints[1], selector);
+                    let request = reqwest::blocking::Client::new().post(url).header("Authorization", format!("Bearer {}", config.access_token)).form(&morph_effect.to_params()).send();
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
 
-        let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
-            .form(&morph_effect.to_params())
-            .send()?;
-    
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
+
     }
 
     /// Activate the move animation for the current light
@@ -1499,8 +2341,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1520,8 +2371,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn move_effect(&self, access_token: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::move_effect_by_selector(access_token, format!("id:{}", self.id), move_effect);
+    pub fn move_effect(&self, config: LifxConfig, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::move_effect_by_selector(config, format!("id:{}", self.id), move_effect);
     }
 
     /// Activate the move animation for the selected light(s)
@@ -1540,6 +2391,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut move_effect = lifx::MoveEffect::new();
     ///     move_effect.direction = Some(format!("forward")); // or backward
@@ -1551,16 +2411,33 @@ impl Light {
     ///     lifx::Light::move_effect_by_selector(key.clone(), format!("all"), move_effect);
     /// }
     ///  ```
-    pub fn move_effect_by_selector(access_token: String, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/move", selector);
+    pub fn move_effect_by_selector(config: LifxConfig, selector: String, move_effect: MoveEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/move", config.api_endpoints[0], selector);
+        let request = reqwest::blocking::Client::new().post(url).header("Authorization", format!("Bearer {}", config.access_token)).form(&move_effect.to_params()).send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/move", config.api_endpoints[1], selector);
+                    let request = reqwest::blocking::Client::new().post(url).header("Authorization", format!("Bearer {}", config.access_token)).form(&move_effect.to_params()).send();
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
 
-        let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
-            .form(&move_effect.to_params())
-            .send()?;
-    
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
     }
 
     /// Activate the pulse animation for the current light
@@ -1579,8 +2456,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1601,8 +2487,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn pulse_effect(&self, access_token: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::pulse_effect_by_selector(access_token, format!("id:{}", self.id), pulse_effect);
+    pub fn pulse_effect(&self, config: LifxConfig, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::pulse_effect_by_selector(config, format!("id:{}", self.id), pulse_effect);
     }
 
     /// Activate the pulse animation for the selected light(s)
@@ -1621,6 +2507,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut pulse = lifx::PulseEffect::new();
     ///     pulse.color = Some(format!("red"));
@@ -1633,16 +2528,39 @@ impl Light {
     ///     lifx::Light::pulse_effect_by_selector(key.clone(), format!("all"), pulse);
     /// }
     ///  ```
-    pub fn pulse_effect_by_selector(access_token: String, selector: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/effects/pulse", selector);
-
+    pub fn pulse_effect_by_selector(config: LifxConfig, selector: String, pulse_effect: PulseEffect) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/effects/pulse", config.api_endpoints[0], selector);
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&pulse_effect.to_params())
-            .send()?;
-    
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+            .send();
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/effects/pulse", config.api_endpoints[1], selector);
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&pulse_effect.to_params())
+                        .send();
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
     }
 
     /// Sets the state for the current light
@@ -1661,8 +2579,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1680,8 +2607,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn set_state(&self, access_token: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::set_state_by_selector(access_token, format!("id:{}", self.id), state);
+    pub fn set_state(&self, config: LifxConfig, state: State) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::set_state_by_selector(config, format!("id:{}", self.id), state);
     }
 
     /// Sets the state for the selected LIFX object
@@ -1700,6 +2627,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut off_state = lifx::State::new();
     ///     off_state.power = Some(format!("off"));
@@ -1708,16 +2644,42 @@ impl Light {
     ///     lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
     /// }
     ///  ```
-    pub fn set_state_by_selector(access_token: String, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/state", selector);
+    pub fn set_state_by_selector(config: LifxConfig, selector: String, state: State) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/state", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().put(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&state.to_params())
-            .send()?;
+            .send();
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/state", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().put(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&state.to_params())
+                        .send();
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// Sets the state for the selected LIFX object
@@ -1735,6 +2697,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut set_states = lifx::States::new();
     ///     let mut states: Vec<lifx::State> = Vec::new();
@@ -1756,16 +2727,44 @@ impl Light {
     ///     lifx::Light::set_states(key.clone(), set_states);
     /// }
     ///  ```
-    pub fn set_states(access_token: String, states: States) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/state");
+    pub fn set_states(config: LifxConfig, states: States) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/state", config.api_endpoints[0]);
 
         let request = reqwest::blocking::Client::new().put(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .json(&states)
-            .send()?;
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/state", config.api_endpoints[1]);
+
+                    let request = reqwest::blocking::Client::new().put(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .json(&states)
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 
     /// Set parameters other than power and duration change the state of the lights by the amount specified.
@@ -1784,6 +2783,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut delta = lifx::StateDelta::new();
     ///     delta.duration = Some(0);
@@ -1793,16 +2801,43 @@ impl Light {
     ///     lifx::Light::state_delta_by_selector(key.clone(), format!("all"), toggle);
     /// }
     ///  ```
-    pub fn state_delta_by_selector(access_token: String, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/state/delta", selector);
+    pub fn state_delta_by_selector(config: LifxConfig, selector: String, delta: StateDelta) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/state/delta", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&delta.to_params())
-            .send()?;
-    
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/state/delta", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&delta.to_params())
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
     }
 
 
@@ -1822,8 +2857,17 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let all_lights = lifx::Light::list_all(key.clone());
+    ///     let all_lights = lifx::Light::list_all(config.clone());
     ///     match all_lights {
     ///         Ok(lights) => {
     ///             println!("{:?}",lights.clone());
@@ -1840,8 +2884,8 @@ impl Light {
     ///     }
     /// }
     ///  ```
-    pub fn toggle(&self, access_token: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
-        return Self::toggle_by_selector(access_token, format!("id:{}", self.id), toggle);
+    pub fn toggle(&self, config: LifxConfig, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        return Self::toggle_by_selector(config, format!("id:{}", self.id), toggle);
     }
 
     /// Turn off lights if any of them are on, or turn them on if they are all off. 
@@ -1860,6 +2904,15 @@ impl Light {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut toggle = lifx::Toggle::new();
     ///     toggle.duration = Some(0);
@@ -1868,16 +2921,45 @@ impl Light {
     ///     lifx::Light::toggle_by_selector(key.clone(), format!("all"), toggle);
     /// }
     ///  ```
-    pub fn toggle_by_selector(access_token: String, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
-        let url = format!("https://api.lifx.com/v1/lights/{}/toggle", selector);
+    pub fn toggle_by_selector(config: LifxConfig, selector: String, toggle: Toggle) ->  Result<LiFxResults, reqwest::Error>{
+        let url = format!("{}/v1/lights/{}/toggle", config.api_endpoints[0], selector);
 
         let request = reqwest::blocking::Client::new().post(url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {}", config.access_token))
             .form(&toggle.to_params())
-            .send()?;
+            .send();
+
+        match request {
+            Ok(req) => {
+                let json = req.json::<LiFxResults>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/lights/{}/toggle", config.api_endpoints[1], selector);
+
+                    let request = reqwest::blocking::Client::new().post(url)
+                        .header("Authorization", format!("Bearer {}", config.access_token))
+                        .form(&toggle.to_params())
+                        .send();
+            
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<LiFxResults>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     
-        let json = request.json::<LiFxResults>()?;
-        return Ok(json);
+
     }
 }
 
@@ -1914,15 +2996,47 @@ impl Scene {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let scenes = lifx::Scene::async_list(key).await?;
+    ///     let scenes = lifx::Scene::async_list(config).await?;
     /// }
     ///  ```
-    pub async fn async_list(access_token: String) -> Result<Scenes, reqwest::Error> {
-        let mut url = format!("https://api.lifx.com/v1/scenes");
-        let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send().await?;
-        let json = request.json::<Scenes>().await?;
-        return Ok(json);
+    pub async fn async_list(config: LifxConfig) -> Result<Scenes, reqwest::Error> {
+        let url = format!("{}/v1/scenes", config.api_endpoints[0]);
+        let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
+        match request {
+            Ok(req) => {
+                let json = req.json::<Scenes>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/scenes", config.api_endpoints[1]);
+                    let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<Scenes>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+            
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
     }
 
     /// Gets ALL scenes belonging to the authenticated account
@@ -1939,15 +3053,49 @@ impl Scene {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let scenes = lifx::Scene::list_all(key)?;
+    ///     let scenes = lifx::Scene::list_all(config)?;
     /// }
     ///  ```
-    pub fn list(access_token: String) -> Result<Scenes, reqwest::Error> {
-        let mut url = format!("https://api.lifx.com/v1/scenes");
-        let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send()?;
-        let json = request.json::<Scenes>()?;
-        return Ok(json);
+    pub fn list(config: LifxConfig) -> Result<Scenes, reqwest::Error> {
+        let url = format!("{}/v1/scenes", config.api_endpoints[0]);
+        let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
+
+        match request{
+            Ok(req) => {
+                let json = req.json::<Scenes>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let url = format!("{}/v1/scenes", config.api_endpoints[1]);
+                    let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
+            
+                    match request{
+                        Ok(req) => {
+                            let json = req.json::<Scenes>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
+
     }
 }
 
@@ -1955,10 +3103,10 @@ impl Scene {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Color {
-    pub hue: Option<i64>,
+    pub hue: Option<f64>,
     pub saturation: Option<i64>,
     pub kelvin: Option<i64>,
-    pub brightness: Option<i64>,
+    pub brightness: Option<f64>,
     pub error: Option<String>,
     pub errors: Option<Vec<Error>>,
 }
@@ -1978,15 +3126,46 @@ impl Color {
     /// async fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let scenes = lifx::Color::async_validate(key, format!("red")).await?;
     /// }
     ///  ```
-    pub async fn async_validate(access_token: String, color: String) -> Result<Color, reqwest::Error> {
-        let mut url = format!("https://api.lifx.com/v1/color?string={}", color);
-        let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send().await?;
-        let json = request.json::<Color>().await?;
-        return Ok(json);
+    pub async fn async_validate(config: LifxConfig, color: String) -> Result<Color, reqwest::Error> {
+        let mut url = format!("{}/v1/color?string={}", config.api_endpoints[0], color);
+        let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
+        match request {
+            Ok(req) => {
+                let json = req.json::<Color>().await?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let mut url = format!("{}/v1/color?string={}", config.api_endpoints[1], color);
+                    let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<Color>().await?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
     }
 
     /// Validates a color
@@ -2003,15 +3182,47 @@ impl Color {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
-    ///     let scenes = lifx::Color::validate(key)?;
+    ///     let scenes = lifx::Color::validate(config)?;
     /// }
     ///  ```
-    pub fn validate(access_token: String, color: String) -> Result<Color, reqwest::Error> {
-        let mut url = format!("https://api.lifx.com/v1/color?string={}", color);
-        let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", access_token)).send()?;
-        let json = request.json::<Color>()?;
-        return Ok(json);
+    pub fn validate(config: LifxConfig, color: String) -> Result<Color, reqwest::Error> {
+        let mut url = format!("{}/v1/color?string={}", config.api_endpoints[0], color);
+        let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
+        match request {
+            Ok(req) => {
+                let json = req.json::<Color>()?;
+                return Ok(json);
+            },
+            Err(err) => {
+                if config.api_endpoints.len() > 1 {
+                    let mut url = format!("{}/v1/color?string={}", config.api_endpoints[1], color);
+                    let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
+                    match request {
+                        Ok(req) => {
+                            let json = req.json::<Color>()?;
+                            return Ok(json);
+                        },
+                        Err(err2) => {
+                            return Err(err2);
+                        }
+                    }
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+
+
     }
 }
 
@@ -2080,6 +3291,15 @@ impl State {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut state = lifx::State::new();
     ///     state.power = Some(format!("off"));
@@ -2150,6 +3370,15 @@ impl Toggle {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut toggle = lifx::Toggle::new();
     ///     toggle.duration = Some(0);
@@ -2192,6 +3421,15 @@ impl States {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut states = lifx::States::new();
     /// }
@@ -2236,6 +3474,15 @@ impl StateDelta {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut delta = lifx::StateDelta::new();
     ///     delta.duration = Some(0);
@@ -2331,6 +3578,15 @@ impl BreatheEffect {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut breathe = lifx::BreatheEffect::new();
     ///     breathe.color = Some(format!("red"));
@@ -2420,6 +3676,15 @@ impl MoveEffect {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut move_effect = lifx::MoveEffect::new();
     ///     move_effect.direction = Some(format!("forward")); // or backward
@@ -2496,6 +3761,15 @@ impl MorphEffect {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut morph_effect = lifx::MorphEffect::new();
     ///     morph_effect.period = Some(10);
@@ -2582,6 +3856,15 @@ impl PulseEffect {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut pulse = lifx::PulseEffect::new();
     ///     pulse.color = Some(format!("red"));
@@ -2657,6 +3940,15 @@ impl EffectsOff {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut ef = lifx::EffectsOff::new();
     ///     ef.power_off = Some(true);
@@ -2706,6 +3998,15 @@ impl FlameEffect {
     /// fn main() {
     /// 
     ///     let key = "xxx".to_string();
+    ///     let mut api_endpoints: Vec<String> = Vec::new();
+    ///
+    ///     api_endpoints.push(format!("https://api.lifx.com"));
+    ///     api_endpoints.push(format!("http://localhost:8089"));
+    ///
+    ///     let config = lifx::LifxConfig{
+    ///        access_token: key.clone(),
+    ///        api_endpoints: api_endpoints
+    ///     };
     /// 
     ///     let mut flame_effect = lifx::FlameEffect::new();
     ///     flame_effect.period = Some(10);

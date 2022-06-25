@@ -2,9 +2,9 @@
 
 ## Description
 
-A synchronous + asynchronous library for communicating with the LIFX-API. 
+A synchronous + asynchronous library for communicating with the official LIFX-API and the unoffical offline API. 
 
-## Supported API Methods:
+## LIFX-API Supported Methods:
 * List Lights
 * Set State
 * Set States
@@ -20,11 +20,16 @@ A synchronous + asynchronous library for communicating with the LIFX-API.
 * List Scenes
 * Validate Color
 
+## Unofficial Offline API Supported Methods:
+* List Lights
+* Set State
+* Set States
+
 ## How to use library
 
 Add the following line to your cargo.toml:
 ```
-lifx-rs = "0.1.23"
+lifx-rs = "0.1.27"
 ```
 
 Example:
@@ -35,14 +40,28 @@ fn main() {
 
     let key = "xxx".to_string();
     
+    let mut api_endpoints: Vec<String> = Vec::new();
+    
+    // Official API
+    api_endpoints.push(format!("https://api.lifx.com"));
+
+    // lifx-server-api (Un-Official)
+    api_endpoints.push(format!("http://localhost:8089"));
+
+    let config = lifx::LifxConfig{
+        access_token: key.clone(),
+        api_endpoints: api_endpoints
+    };
+
+    // Build an "OffState" to set
     let mut off_state = lifx::State::new();
     off_state.power = Some(format!("off"));
 
     // Turn off all lights
-    lifx::Light::set_state_by_selector(key.clone(), format!("all"), off_state);
+    lifx::Light::set_state_by_selector(config.clone(), format!("all"), off_state);
 
 
-    let all_lights = lifx::Light::list_all(key.clone());
+    let all_lights = lifx::Light::list_all(config.clone());
     match all_lights {
         Ok(lights) => {
             println!("{:?}",lights.clone());
@@ -52,7 +71,7 @@ fn main() {
             state.brightness = Some(1.0);
         
             for light in lights {
-                let results = light.set_state(key.clone(), state.clone());
+                let results = light.set_state(config.clone(), state.clone());
                 println!("{:?}",results);
             }
         },
@@ -60,6 +79,7 @@ fn main() {
     }
 
 }
+
 ```
 
 
@@ -71,12 +91,26 @@ extern crate lifx_rs as lifx;
 async fn main() {
 
     let key = "xxx".to_string();
+    
+    let mut api_endpoints: Vec<String> = Vec::new();
+    
+    // Official API
+    api_endpoints.push(format!("https://api.lifx.com"));
 
+    // lifx-server-api (Un-Official)
+    api_endpoints.push(format!("http://localhost:8089"));
+
+    let config = lifx::LifxConfig{
+        access_token: key.clone(),
+        api_endpoints: api_endpoints
+    };
+
+    // Build "OffState" to set
     let mut off_state = lifx::State::new();
     off_state.power = Some(format!("off"));
     
     // Turn off all lights
-    lifx::Light::async_set_state_by_selector(key.clone(), format!("all"), off_state).await;
+    lifx::Light::async_set_state_by_selector(config.clone(), format!("all"), off_state).await;
 }
 ```
 
@@ -100,9 +134,11 @@ Released under Apache 2.0 or MIT.
  * https://www.patreon.com/calebsmith_pixelcoda
 
 #### Or donating crypto:
- * ADA:    addr1vyjsx8zthl5fks8xjsf6fkrqqsxr4f5tprfwux5zsnz862glwmyr3
- * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
- * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
- * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
-
-
+ * ADA: addr1qyp299a45tgvveh83tcxlf7ds3yaeh969yt3v882lvxfkkv4e0f46qvr4wzj8ty5c05jyffzq8a9pfwz9dl6m0raac7s4rac48
+ * ALGO: VQ5EK4GA3IUTGSPNGV64UANBUVFAIVBXVL5UUCNZSDH544XIMF7BAHEDM4
+ * ATOM: cosmos1wm7lummcealk0fxn3x9tm8hg7xsyuz06ul5fw9
+ * BTC: bc1qh5p3rff4vxnv23vg0hw8pf3gmz3qgc029cekxz
+ * ETH: 0x7A66beaebF7D0d17598d37525e63f524CfD23452
+ * ERC20: 0x7A66beaebF7D0d17598d37525e63f524CfD23452
+ * XLM: GCJAUMCO2L7PTYMXELQ6GHBTF25MCQKEBNSND2C4QMUPTSVCPEN3LCOG
+ * XTZ: tz1SgJppPn56whprsDDGcqR4fxqCr2PXvg1R
