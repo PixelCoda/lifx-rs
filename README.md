@@ -32,7 +32,7 @@ A synchronous + asynchronous library for communicating with the official LIFX-AP
 
 Add the following line to your cargo.toml:
 ```
-lifx-rs = "0.1.28"
+lifx-rs = "0.1.29"
 ```
 
 Example:

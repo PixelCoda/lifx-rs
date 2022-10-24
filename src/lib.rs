@@ -3107,7 +3107,7 @@ impl Scene {
 #[serde(rename_all = "camelCase")]
 pub struct Color {
     pub hue: Option<f64>,
-    pub saturation: Option<i64>,
+    pub saturation: Option<f64>,
     pub kelvin: Option<i64>,
     pub brightness: Option<f64>,
     pub error: Option<String>,
