@@ -161,10 +161,10 @@
 
 pub mod lan;
 
-use serde_json::json;
+
 
 use serde::{Serialize, Deserialize};
-use std::convert::TryInto;
+
 
 
 
@@ -777,7 +777,7 @@ impl Light {
     /// }
     ///  ```
     pub async fn async_list_by_selector(config: LifxConfig, selector: String) -> Result<Lights, reqwest::Error> {
-        let mut url = format!("{}/v1/lights/{}", config.api_endpoints[0], selector);
+        let url = format!("{}/v1/lights/{}", config.api_endpoints[0], selector);
         let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
         match request {
             Ok(req) => {
@@ -786,7 +786,7 @@ impl Light {
             },
             Err(err) => {
                 if config.api_endpoints.len() > 1 {
-                    let mut url = format!("{}/v1/lights/{}", config.api_endpoints[1], selector);
+                    let url = format!("{}/v1/lights/{}", config.api_endpoints[1], selector);
                     let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
                     match request {
                         Ok(req) => {
@@ -3143,7 +3143,7 @@ impl Color {
     /// }
     ///  ```
     pub async fn async_validate(config: LifxConfig, color: String) -> Result<Color, reqwest::Error> {
-        let mut url = format!("{}/v1/color?string={}", config.api_endpoints[0], color);
+        let url = format!("{}/v1/color?string={}", config.api_endpoints[0], color);
         let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
         match request {
             Ok(req) => {
@@ -3152,7 +3152,7 @@ impl Color {
             },
             Err(err) => {
                 if config.api_endpoints.len() > 1 {
-                    let mut url = format!("{}/v1/color?string={}", config.api_endpoints[1], color);
+                    let url = format!("{}/v1/color?string={}", config.api_endpoints[1], color);
                     let request = reqwest::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send().await;
                     match request {
                         Ok(req) => {
@@ -3199,7 +3199,7 @@ impl Color {
     /// }
     ///  ```
     pub fn validate(config: LifxConfig, color: String) -> Result<Color, reqwest::Error> {
-        let mut url = format!("{}/v1/color?string={}", config.api_endpoints[0], color);
+        let url = format!("{}/v1/color?string={}", config.api_endpoints[0], color);
         let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
         match request {
             Ok(req) => {
@@ -3208,7 +3208,7 @@ impl Color {
             },
             Err(err) => {
                 if config.api_endpoints.len() > 1 {
-                    let mut url = format!("{}/v1/color?string={}", config.api_endpoints[1], color);
+                    let url = format!("{}/v1/color?string={}", config.api_endpoints[1], color);
                     let request = reqwest::blocking::Client::new().get(url).header("Authorization", format!("Bearer {}", config.access_token)).send();
                     match request {
                         Ok(req) => {
@@ -4057,7 +4057,7 @@ impl FlameEffect {
 pub fn string_vec_to_params(input: Vec<String>) -> String {
 
     let mut params = String::new();
-    let mut count = 0;
+    let count = 0;
     for iput in input {
         if count == 0 {
             params = format!("[\"{}\"", iput);
